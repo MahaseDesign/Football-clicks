@@ -515,131 +515,168 @@
     position: fixed; inset: 0; z-index: 350;
     pointer-events: none;
     overflow: hidden;
+    background: rgba(5,15,30,0.82);
   }
   #goal-scene.active { display: block; }
 
   /* crowd flash */
   .goal-crowd-flash {
     position: absolute; inset: 0;
-    background: radial-gradient(ellipse at center, rgba(245,197,24,0.55) 0%, transparent 70%);
-    animation: crowdPulse 1.8s ease forwards;
+    background: radial-gradient(ellipse at 50% 60%, rgba(245,197,24,0.45) 0%, transparent 68%);
+    animation: crowdPulse 2s ease forwards;
   }
   @keyframes crowdPulse {
     0%   { opacity: 0; }
-    15%  { opacity: 1; }
-    50%  { opacity: 0.7; }
+    20%  { opacity: 1; }
+    60%  { opacity: 0.6; }
     100% { opacity: 0; }
   }
 
-  /* goalposts */
-  .goal-net-wrap {
+  /* ── GOAL STRUCTURE — centred on screen ── */
+  .goal-frame {
     position: absolute;
-    bottom: 0; left: 50%;
+    /* sit in the lower-centre of the screen */
+    bottom: 8%;
+    left: 50%;
     transform: translateX(-50%);
-    width: min(520px, 92vw);
-    animation: netDrop 0.35s cubic-bezier(0.22,1,0.36,1) forwards;
-  }
-  @keyframes netDrop {
-    from { transform: translateX(-50%) translateY(100%); }
-    to   { transform: translateX(-50%) translateY(0); }
+    width: min(500px, 90vw);
+    height: min(240px, 38vw);
   }
 
-  .goal-post {
-    position: relative;
-    width: 100%; height: 220px;
-  }
   /* crossbar */
-  .goal-post::before {
-    content: '';
+  .goal-crossbar {
     position: absolute;
-    top: 0; left: 0; right: 0; height: 12px;
-    background: linear-gradient(180deg, #e8e8e8, #c0c0c0);
-    border-radius: 4px 4px 0 0;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    top: 0; left: 0; right: 0;
+    height: 14px;
+    background: linear-gradient(180deg, #f0f0f0 0%, #b0b0b0 100%);
+    border-radius: 6px 6px 0 0;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6), inset 0 2px 0 rgba(255,255,255,0.5);
+    z-index: 2;
   }
   /* left post */
-  .goal-post::after {
-    content: '';
+  .goal-post-left {
     position: absolute;
-    top: 0; left: 0; width: 12px; height: 100%;
-    background: linear-gradient(90deg, #e8e8e8, #c0c0c0);
-    border-radius: 0 0 0 4px;
-    box-shadow: 4px 0 16px rgba(0,0,0,0.3);
+    top: 0; left: 0;
+    width: 14px; height: 100%;
+    background: linear-gradient(90deg, #f0f0f0 0%, #b0b0b0 100%);
+    border-radius: 0 0 0 6px;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.5), inset 2px 0 0 rgba(255,255,255,0.5);
+    z-index: 2;
   }
-  .goal-right-post {
+  /* right post */
+  .goal-post-right {
     position: absolute;
-    top: 0; right: 0; width: 12px; height: 100%;
-    background: linear-gradient(270deg, #e8e8e8, #c0c0c0);
-    border-radius: 0 0 4px 0;
-    box-shadow: -4px 0 16px rgba(0,0,0,0.3);
+    top: 0; right: 0;
+    width: 14px; height: 100%;
+    background: linear-gradient(270deg, #f0f0f0 0%, #b0b0b0 100%);
+    border-radius: 0 0 6px 0;
+    box-shadow: -4px 0 20px rgba(0,0,0,0.5), inset -2px 0 0 rgba(255,255,255,0.5);
+    z-index: 2;
   }
 
-  /* net grid */
-  .goal-net {
+  /* net */
+  .goal-net-inner {
     position: absolute;
-    top: 12px; left: 12px; right: 12px; bottom: 0;
+    top: 14px; left: 14px; right: 14px; bottom: 0;
     background-image:
-      linear-gradient(rgba(255,255,255,0.25) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,0.25) 1px, transparent 1px);
-    background-size: 28px 28px;
-    background-color: rgba(255,255,255,0.05);
+      linear-gradient(rgba(200,220,255,0.35) 1.5px, transparent 1.5px),
+      linear-gradient(90deg, rgba(200,220,255,0.35) 1.5px, transparent 1.5px);
+    background-size: 32px 32px;
+    background-color: rgba(150,190,255,0.07);
+    z-index: 1;
+    transform-origin: top center;
+    transition: transform 0.1s;
   }
-  /* net bulge when ball hits */
-  .goal-net.bulge {
-    animation: netBulge 0.5s 0.25s ease forwards;
+  .goal-net-inner.bulge {
+    animation: netBulge 0.55s ease forwards;
   }
   @keyframes netBulge {
-    0%   { transform: perspective(300px) rotateX(0deg); background-color: rgba(255,255,255,0.05); }
-    40%  { transform: perspective(300px) rotateX(-8deg) scaleY(1.08); background-color: rgba(255,255,255,0.12); }
-    100% { transform: perspective(300px) rotateX(0deg); background-color: rgba(255,255,255,0.05); }
+    0%   { transform: perspective(400px) rotateX(0deg) scaleY(1);   background-color: rgba(150,190,255,0.07); }
+    35%  { transform: perspective(400px) rotateX(12deg) scaleY(1.1); background-color: rgba(200,230,255,0.18); }
+    70%  { transform: perspective(400px) rotateX(6deg)  scaleY(1.05); }
+    100% { transform: perspective(400px) rotateX(0deg)  scaleY(1);   background-color: rgba(150,190,255,0.07); }
+  }
+
+  /* grass line below goal */
+  .goal-grass {
+    position: absolute;
+    bottom: 6%; left: 50%;
+    transform: translateX(-50%);
+    width: min(560px, 96vw);
+    height: 18px;
+    background: linear-gradient(180deg, #3a9648 0%, #2d7a3a 100%);
+    border-radius: 3px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
   }
 
   /* the flying ball */
   #goal-ball {
     position: absolute;
-    font-size: 56px;
-    animation: ballFlyIn 0.55s cubic-bezier(0.22,1,0.36,1) forwards;
-    filter: drop-shadow(0 8px 24px rgba(0,0,0,0.5));
+    font-size: clamp(44px, 9vw, 72px);
+    /* start top-centre, fly into the net centre */
+    left: 50%;
+    top: 0;
+    transform: translate(-50%, -120px) scale(0.25) rotate(0deg);
+    filter: drop-shadow(0 8px 24px rgba(0,0,0,0.7));
+    z-index: 10;
+    animation: ballFlyIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   }
+
   @keyframes ballFlyIn {
-    0%   { left: 50%; top: -10%; transform: translate(-50%, 0) scale(0.3) rotate(0deg); opacity: 0.8; }
-    70%  { left: 50%; top: 35%;  transform: translate(-50%, 0) scale(1.1) rotate(540deg); opacity: 1; }
-    100% { left: 50%; top: 40%;  transform: translate(-50%, 0) scale(1) rotate(600deg); opacity: 1; }
+    0%   {
+      left: 50%; top: 0;
+      transform: translate(-50%, -100px) scale(0.2) rotate(0deg);
+      opacity: 1;
+    }
+    65%  {
+      left: 50%;
+      /* land roughly in upper half of net */
+      top: calc(100vh - min(240px,38vw) - 8% - min(120px,19vw));
+      transform: translate(-50%, 0) scale(1.15) rotate(540deg);
+      opacity: 1;
+    }
+    100% {
+      left: 50%;
+      top: calc(100vh - min(240px,38vw) - 8% - min(100px,17vw));
+      transform: translate(-50%, 0) scale(1) rotate(600deg);
+      opacity: 1;
+    }
   }
 
   /* GOAL text */
   .goal-text {
     position: absolute;
-    top: 22%; left: 50%; transform: translateX(-50%);
+    top: 18%; left: 50%;
+    transform: translateX(-50%) scale(0);
     font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(72px, 18vw, 140px);
+    font-size: clamp(80px, 20vw, 160px);
     color: var(--gold);
-    letter-spacing: 6px;
+    letter-spacing: 8px;
     text-shadow:
-      0 0 40px rgba(245,197,24,0.9),
-      0 4px 0 rgba(0,0,0,0.4),
-      0 8px 32px rgba(0,0,0,0.6);
+      0 0 60px rgba(245,197,24,1),
+      0 0 20px rgba(245,197,24,0.8),
+      0 6px 0 rgba(0,0,0,0.5);
     white-space: nowrap;
-    animation: goalTextPop 1.8s cubic-bezier(0.22,1,0.36,1) forwards;
+    z-index: 20;
+    animation: goalTextPop 2s cubic-bezier(0.22,1,0.36,1) forwards;
+    animation-delay: 0.4s;
   }
   @keyframes goalTextPop {
-    0%   { opacity: 0; transform: translateX(-50%) scale(0.2) rotate(-8deg); }
-    25%  { opacity: 1; transform: translateX(-50%) scale(1.15) rotate(2deg); }
-    50%  { transform: translateX(-50%) scale(1) rotate(0deg); }
+    0%   { opacity: 0; transform: translateX(-50%) scale(0.1) rotate(-6deg); }
+    30%  { opacity: 1; transform: translateX(-50%) scale(1.2) rotate(2deg); }
+    55%  { transform: translateX(-50%) scale(1) rotate(0deg); }
     80%  { opacity: 1; }
-    100% { opacity: 0; transform: translateX(-50%) scale(1.05) rotate(0deg); }
+    100% { opacity: 0; transform: translateX(-50%) scale(1.05); }
   }
 
   /* confetti */
   .confetti-piece {
     position: absolute;
-    width: 10px; height: 10px;
-    border-radius: 2px;
     animation: confettiFall linear forwards;
   }
   @keyframes confettiFall {
-    0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
-    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+    0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
   }
 
   /* notifications ring */
@@ -829,11 +866,12 @@
   <div class="goal-crowd-flash"></div>
   <div class="goal-text">GOAL!</div>
   <div id="goal-ball">⚽</div>
-  <div class="goal-net-wrap">
-    <div class="goal-post">
-      <div class="goal-right-post"></div>
-      <div class="goal-net" id="goal-net"></div>
-    </div>
+  <div class="goal-grass"></div>
+  <div class="goal-frame">
+    <div class="goal-crossbar"></div>
+    <div class="goal-post-left"></div>
+    <div class="goal-post-right"></div>
+    <div class="goal-net-inner" id="goal-net"></div>
   </div>
 </div>
 
@@ -1139,48 +1177,103 @@ function openQuestion() {
 
   questionCount++;
   document.getElementById('question-overlay').classList.add('active');
+
+  // Prevent accidental clicks — clouds not clickable for first 600ms
+  const container2 = document.getElementById('cloud-container');
+  container2.style.pointerEvents = 'none';
+  setTimeout(() => { container2.style.pointerEvents = ''; }, 600);
 }
 
 // ─── GOAL CELEBRATION ───
 function triggerGoal() {
-  const scene = document.getElementById('goal-scene');
-  const net   = document.getElementById('goal-net');
+  const scene  = document.getElementById('goal-scene');
+  const net    = document.getElementById('goal-net');
+  const ball   = document.getElementById('goal-ball');
+  const frame  = scene.querySelector('.goal-frame');
 
-  // Reset
+  // --- Reset everything cleanly ---
   scene.classList.remove('active');
   net.classList.remove('bulge');
+  // Force browser to flush before re-adding
+  void scene.offsetWidth;
 
-  // Spawn confetti
+  // Remove old confetti
   scene.querySelectorAll('.confetti-piece').forEach(e => e.remove());
-  const colors = ['#f5c518','#4caf50','#2196f3','#e53935','#ffffff','#ff9800'];
-  for (let i = 0; i < 60; i++) {
+
+  // --- Work out where the net centre is on screen ---
+  // We need to do this AFTER the scene is visible so layout is correct
+  scene.classList.add('active');
+  void scene.offsetWidth; // flush again so frame has its position
+
+  const frameRect = frame.getBoundingClientRect();
+  const ballSize  = parseFloat(getComputedStyle(ball).fontSize);
+
+  // Target: upper-centre of the net (just inside crossbar)
+  const targetX = frameRect.left + frameRect.width  / 2;
+  const targetY = frameRect.top  + frameRect.height * 0.28;
+
+  // Start: top-centre of screen, small
+  const startX  = window.innerWidth  / 2;
+  const startY  = -ballSize;
+
+  // Set start position via CSS variables used in a new keyframe
+  ball.style.cssText = `
+    position: absolute;
+    font-size: clamp(44px, 9vw, 72px);
+    left: ${startX}px;
+    top:  ${startY}px;
+    transform: translate(-50%, 0) scale(0.22) rotate(0deg);
+    filter: drop-shadow(0 8px 24px rgba(0,0,0,0.7));
+    z-index: 10;
+    transition: none;
+    animation: none;
+  `;
+  void ball.offsetWidth;
+
+  // Animate with JS-driven keyframes using the Web Animations API
+  const flyDuration = 620;
+  ball.animate([
+    { left: startX + 'px', top: startY + 'px',
+      transform: 'translate(-50%,0) scale(0.22) rotate(0deg)',   opacity: '1' },
+    { left: (startX + (targetX - startX)*0.6) + 'px',
+      top:  (startY + (targetY - startY)*0.6) + 'px',
+      transform: 'translate(-50%,0) scale(0.9)  rotate(360deg)',  opacity: '1',
+      offset: 0.6 },
+    { left: targetX + 'px', top: targetY + 'px',
+      transform: 'translate(-50%,0) scale(1.05) rotate(560deg)',  opacity: '1' },
+  ], {
+    duration: flyDuration,
+    easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+    fill: 'forwards'
+  });
+
+  // Net bulge when ball arrives
+  setTimeout(() => net.classList.add('bulge'), flyDuration - 60);
+
+  // Confetti burst
+  const colors = ['#f5c518','#4caf50','#2196f3','#e53935','#ffffff','#ff9800','#e91e63'];
+  for (let i = 0; i < 70; i++) {
     const c = document.createElement('div');
     c.className = 'confetti-piece';
+    const size = 7 + Math.random() * 9;
     c.style.cssText = `
-      left: ${Math.random()*100}%;
-      top: ${-10 - Math.random()*20}px;
-      background: ${colors[Math.floor(Math.random()*colors.length)]};
-      width: ${6+Math.random()*8}px;
-      height: ${6+Math.random()*8}px;
-      animation-duration: ${1.2+Math.random()*1.4}s;
-      animation-delay: ${Math.random()*0.6}s;
-      border-radius: ${Math.random()>0.5?'50%':'2px'};
+      left: ${10 + Math.random()*80}%;
+      top: ${-size}px;
+      width: ${size}px; height: ${size}px;
+      background: ${colors[i % colors.length]};
+      border-radius: ${Math.random() > 0.45 ? '50%' : '2px'};
+      animation-duration: ${1.4 + Math.random() * 1.2}s;
+      animation-delay: ${0.3 + Math.random() * 0.5}s;
     `;
     scene.appendChild(c);
   }
 
-  // Show scene
-  void scene.offsetWidth;
-  scene.classList.add('active');
-
-  // Trigger net bulge after ball arrives
-  setTimeout(() => net.classList.add('bulge'), 260);
-
-  // Hide after 2.2s
+  // Hide after 2.4s
   setTimeout(() => {
     scene.classList.remove('active');
     net.classList.remove('bulge');
-  }, 2200);
+    ball.style.cssText = '';
+  }, 2400);
 }
 
 function answerQuestion(isCorrect, clickedEl, answers, container) {
