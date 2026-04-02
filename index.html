@@ -509,6 +509,139 @@
   .result-flash.correct-flash .result-flash-text { color: #4caf50; }
   .result-flash.wrong-flash .result-flash-text { color: var(--red); }
 
+  /* ── GOAL CELEBRATION ── */
+  #goal-scene {
+    display: none;
+    position: fixed; inset: 0; z-index: 350;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  #goal-scene.active { display: block; }
+
+  /* crowd flash */
+  .goal-crowd-flash {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, rgba(245,197,24,0.55) 0%, transparent 70%);
+    animation: crowdPulse 1.8s ease forwards;
+  }
+  @keyframes crowdPulse {
+    0%   { opacity: 0; }
+    15%  { opacity: 1; }
+    50%  { opacity: 0.7; }
+    100% { opacity: 0; }
+  }
+
+  /* goalposts */
+  .goal-net-wrap {
+    position: absolute;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: min(520px, 92vw);
+    animation: netDrop 0.35s cubic-bezier(0.22,1,0.36,1) forwards;
+  }
+  @keyframes netDrop {
+    from { transform: translateX(-50%) translateY(100%); }
+    to   { transform: translateX(-50%) translateY(0); }
+  }
+
+  .goal-post {
+    position: relative;
+    width: 100%; height: 220px;
+  }
+  /* crossbar */
+  .goal-post::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 12px;
+    background: linear-gradient(180deg, #e8e8e8, #c0c0c0);
+    border-radius: 4px 4px 0 0;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  }
+  /* left post */
+  .goal-post::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 12px; height: 100%;
+    background: linear-gradient(90deg, #e8e8e8, #c0c0c0);
+    border-radius: 0 0 0 4px;
+    box-shadow: 4px 0 16px rgba(0,0,0,0.3);
+  }
+  .goal-right-post {
+    position: absolute;
+    top: 0; right: 0; width: 12px; height: 100%;
+    background: linear-gradient(270deg, #e8e8e8, #c0c0c0);
+    border-radius: 0 0 4px 0;
+    box-shadow: -4px 0 16px rgba(0,0,0,0.3);
+  }
+
+  /* net grid */
+  .goal-net {
+    position: absolute;
+    top: 12px; left: 12px; right: 12px; bottom: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.25) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.25) 1px, transparent 1px);
+    background-size: 28px 28px;
+    background-color: rgba(255,255,255,0.05);
+  }
+  /* net bulge when ball hits */
+  .goal-net.bulge {
+    animation: netBulge 0.5s 0.25s ease forwards;
+  }
+  @keyframes netBulge {
+    0%   { transform: perspective(300px) rotateX(0deg); background-color: rgba(255,255,255,0.05); }
+    40%  { transform: perspective(300px) rotateX(-8deg) scaleY(1.08); background-color: rgba(255,255,255,0.12); }
+    100% { transform: perspective(300px) rotateX(0deg); background-color: rgba(255,255,255,0.05); }
+  }
+
+  /* the flying ball */
+  #goal-ball {
+    position: absolute;
+    font-size: 56px;
+    animation: ballFlyIn 0.55s cubic-bezier(0.22,1,0.36,1) forwards;
+    filter: drop-shadow(0 8px 24px rgba(0,0,0,0.5));
+  }
+  @keyframes ballFlyIn {
+    0%   { left: 50%; top: -10%; transform: translate(-50%, 0) scale(0.3) rotate(0deg); opacity: 0.8; }
+    70%  { left: 50%; top: 35%;  transform: translate(-50%, 0) scale(1.1) rotate(540deg); opacity: 1; }
+    100% { left: 50%; top: 40%;  transform: translate(-50%, 0) scale(1) rotate(600deg); opacity: 1; }
+  }
+
+  /* GOAL text */
+  .goal-text {
+    position: absolute;
+    top: 22%; left: 50%; transform: translateX(-50%);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(72px, 18vw, 140px);
+    color: var(--gold);
+    letter-spacing: 6px;
+    text-shadow:
+      0 0 40px rgba(245,197,24,0.9),
+      0 4px 0 rgba(0,0,0,0.4),
+      0 8px 32px rgba(0,0,0,0.6);
+    white-space: nowrap;
+    animation: goalTextPop 1.8s cubic-bezier(0.22,1,0.36,1) forwards;
+  }
+  @keyframes goalTextPop {
+    0%   { opacity: 0; transform: translateX(-50%) scale(0.2) rotate(-8deg); }
+    25%  { opacity: 1; transform: translateX(-50%) scale(1.15) rotate(2deg); }
+    50%  { transform: translateX(-50%) scale(1) rotate(0deg); }
+    80%  { opacity: 1; }
+    100% { opacity: 0; transform: translateX(-50%) scale(1.05) rotate(0deg); }
+  }
+
+  /* confetti */
+  .confetti-piece {
+    position: absolute;
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    animation: confettiFall linear forwards;
+  }
+  @keyframes confettiFall {
+    0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
   /* notifications ring */
   .notification-ring {
     position: fixed;
@@ -691,6 +824,19 @@
   <div class="result-flash-text">❌ UNLUCKY!</div>
 </div>
 
+<!-- ─── GOAL SCENE ─── -->
+<div id="goal-scene">
+  <div class="goal-crowd-flash"></div>
+  <div class="goal-text">GOAL!</div>
+  <div id="goal-ball">⚽</div>
+  <div class="goal-net-wrap">
+    <div class="goal-post">
+      <div class="goal-right-post"></div>
+      <div class="goal-net" id="goal-net"></div>
+    </div>
+  </div>
+</div>
+
 <!-- notifications -->
 <div class="notification-ring" id="notif-ring"></div>
 
@@ -719,53 +865,87 @@
 
 <script>
 // ─── QUESTIONS BANK ───
-// subject: 'football' | 'cs'   tier: 1–5
+// subject: 'football' | 'cs'   tier: 1–3 used under 1000pts, tier 4–5 unlocked after 1000pts
 const QUESTIONS = [
-  // ── FOOTBALL ──
-  { subject:'football', q: "How many players are in a football team on the pitch?", answers: ["11","9","10","12"], correct: 0, tier: 1 },
-  { subject:'football', q: "What colour card means a player is sent off?", answers: ["Red","Blue","Green","Black"], correct: 0, tier: 1 },
-  { subject:'football', q: "Who wears gloves in a football team?", answers: ["Goalkeeper","Striker","Referee","Manager"], correct: 0, tier: 1 },
+  // ══ FOOTBALL — Tiers 1–3 (Year 7 friendly, real teams) ══
+  { subject:'football', q: "Which team plays at Old Trafford?", answers: ["Manchester United","Manchester City","Liverpool","Arsenal"], correct: 0, tier: 1 },
+  { subject:'football', q: "What colour is Chelsea's home kit?", answers: ["Blue","Red","White","Yellow"], correct: 0, tier: 1 },
+  { subject:'football', q: "How many players are on the pitch per team?", answers: ["11","9","10","12"], correct: 0, tier: 1 },
+  { subject:'football', q: "Which team plays at Anfield?", answers: ["Liverpool","Everton","Chelsea","Arsenal"], correct: 0, tier: 1 },
+  { subject:'football', q: "What colour card means a player is sent off?", answers: ["Red","Blue","Yellow","Green"], correct: 0, tier: 1 },
+  { subject:'football', q: "Which team is known as The Gunners?", answers: ["Arsenal","Chelsea","Tottenham","West Ham"], correct: 0, tier: 1 },
   { subject:'football', q: "How long is a standard football match?", answers: ["90 minutes","60 minutes","80 minutes","45 minutes"], correct: 0, tier: 1 },
-  { subject:'football', q: "How many halves are in a football match?", answers: ["2","3","4","1"], correct: 0, tier: 2 },
-  { subject:'football', q: "A penalty kick is taken from how many yards?", answers: ["12 yards","6 yards","18 yards","10 yards"], correct: 0, tier: 2 },
-  { subject:'football', q: "What does VAR stand for?", answers: ["Video Assistant Referee","Very Accurate Review","Visible Action Ruling","Video Action Replay"], correct: 0, tier: 2 },
-  { subject:'football', q: "What trophy do international teams compete for every 4 years?", answers: ["World Cup","Euro Cup","Champions League","FA Cup"], correct: 0, tier: 2 },
-  { subject:'football', q: "Which country won the 2022 FIFA World Cup?", answers: ["Argentina","France","Brazil","Germany"], correct: 0, tier: 3 },
-  { subject:'football', q: "How many substitutes can a PL team use per match?", answers: ["5","3","4","6"], correct: 0, tier: 3 },
-  { subject:'football', q: "What is 'offside' in football?", answers: ["Ahead of last defender when ball played","Behind the ball","Outside the pitch","Pushing a player"], correct: 0, tier: 3 },
-  { subject:'football', q: "Who is the all-time top scorer in the Premier League?", answers: ["Alan Shearer","Wayne Rooney","Andrew Cole","Frank Lampard"], correct: 0, tier: 3 },
+  { subject:'football', q: "Which team plays at the Etihad Stadium?", answers: ["Manchester City","Manchester United","Burnley","Oldham"], correct: 0, tier: 1 },
+
+  { subject:'football', q: "Which country does Kylian Mbappé play for?", answers: ["France","Brazil","Spain","Belgium"], correct: 0, tier: 2 },
+  { subject:'football', q: "Manchester City's home kit is which colour?", answers: ["Sky Blue","Dark Blue","Red","White"], correct: 0, tier: 2 },
+  { subject:'football', q: "Which club does Erling Haaland play for?", answers: ["Manchester City","Arsenal","Real Madrid","Bayern Munich"], correct: 0, tier: 2 },
+  { subject:'football', q: "What does VAR stand for?", answers: ["Video Assistant Referee","Very Accurate Review","Visible Action Review","Video Action Ruling"], correct: 0, tier: 2 },
+  { subject:'football', q: "Which team is known as the Spurs?", answers: ["Tottenham Hotspur","Chelsea","Arsenal","West Ham"], correct: 0, tier: 2 },
+  { subject:'football', q: "Which country won the 2022 FIFA World Cup?", answers: ["Argentina","France","Brazil","Germany"], correct: 0, tier: 2 },
+  { subject:'football', q: "Bukayo Saka plays for which Premier League club?", answers: ["Arsenal","Liverpool","Chelsea","Man City"], correct: 0, tier: 2 },
+  { subject:'football', q: "Which team plays at Stamford Bridge?", answers: ["Chelsea","Arsenal","Tottenham","Fulham"], correct: 0, tier: 2 },
+
+  { subject:'football', q: "How many substitutes can a Premier League team make per match?", answers: ["5","3","4","6"], correct: 0, tier: 3 },
+  { subject:'football', q: "Which club is Jude Bellingham associated with before Real Madrid?", answers: ["Birmingham City","Chelsea","Arsenal","Liverpool"], correct: 0, tier: 3 },
+  { subject:'football', q: "Liverpool's home kit is which colour?", answers: ["Red","Blue","Yellow","White"], correct: 0, tier: 3 },
+  { subject:'football', q: "Which team plays at the Emirates Stadium?", answers: ["Arsenal","Tottenham","Chelsea","West Ham"], correct: 0, tier: 3 },
+  { subject:'football', q: "What trophy is won by the best team in Europe?", answers: ["Champions League","World Cup","FA Cup","Europa League"], correct: 0, tier: 3 },
+  { subject:'football', q: "Marcus Rashford plays for which club?", answers: ["Manchester United","Man City","Chelsea","Arsenal"], correct: 0, tier: 3 },
+  { subject:'football', q: "A penalty shootout is used to decide a match when the score is what?", answers: ["A draw after extra time","0-0 at 90 minutes","A draw at half time","A draw after 45 minutes"], correct: 0, tier: 3 },
+  { subject:'football', q: "Which Premier League team plays at St. James' Park?", answers: ["Newcastle United","Sunderland","Middlesbrough","Leeds United"], correct: 0, tier: 3 },
+
+  // ══ FOOTBALL — Tiers 4–5 (harder, unlocked after 1000 pts) ══
   { subject:'football', q: "How many panels does a traditional football have?", answers: ["32","24","20","36"], correct: 0, tier: 4 },
   { subject:'football', q: "In what year was the Premier League founded?", answers: ["1992","1985","1888","2000"], correct: 0, tier: 4 },
   { subject:'football', q: "Which club has won the most Champions League titles?", answers: ["Real Madrid","Barcelona","Bayern Munich","Liverpool"], correct: 0, tier: 4 },
+  { subject:'football', q: "Which stadium has the largest capacity in England?", answers: ["Wembley","Old Trafford","Anfield","Etihad"], correct: 0, tier: 4 },
+  { subject:'football', q: "Who is the all-time top scorer in the Premier League?", answers: ["Alan Shearer","Wayne Rooney","Andrew Cole","Frank Lampard"], correct: 0, tier: 4 },
   { subject:'football', q: "How many times has England won the World Cup?", answers: ["1","2","0","3"], correct: 0, tier: 4 },
-  { subject:'football', q: "Which goalkeeper has the most PL clean sheets?", answers: ["Petr Čech","David James","David Seaman","Mark Schwarzer"], correct: 0, tier: 5 },
+  { subject:'football', q: "Which goalkeeper has the most PL clean sheets ever?", answers: ["Petr Čech","David James","David Seaman","Mark Schwarzer"], correct: 0, tier: 5 },
   { subject:'football', q: "What is the circumference of a size 5 football?", answers: ["68–70 cm","60–62 cm","75–78 cm","55–58 cm"], correct: 0, tier: 5 },
   { subject:'football', q: "Who scored the 'Hand of God' goal in 1986?", answers: ["Maradona","Pelé","Zidane","Ronaldo"], correct: 0, tier: 5 },
-  { subject:'football', q: "What year did the 'back-pass rule' change?", answers: ["1992","1988","1995","2000"], correct: 0, tier: 5 },
+  { subject:'football', q: "In which year did Leicester City famously win the Premier League?", answers: ["2016","2014","2018","2012"], correct: 0, tier: 5 },
 
-  // ── COMPUTER SCIENCE ──
+  // ══ CS — Tiers 1–3 (Year 7 friendly) ══
   { subject:'cs', q: "What does CPU stand for?", answers: ["Central Processing Unit","Computer Power Unit","Control Process Unit","Core Processing Unit"], correct: 0, tier: 1 },
   { subject:'cs', q: "How many bits are in one byte?", answers: ["8","4","16","2"], correct: 0, tier: 1 },
-  { subject:'cs', q: "What does the 'www' in a website address stand for?", answers: ["World Wide Web","World Wide Wire","Wide Web World","Web Wide World"], correct: 0, tier: 1 },
   { subject:'cs', q: "Which of these is an input device?", answers: ["Keyboard","Monitor","Speaker","Printer"], correct: 0, tier: 1 },
-  { subject:'cs', q: "What does RAM stand for?", answers: ["Random Access Memory","Read And Move","Rapid Access Mode","Read All Memory"], correct: 0, tier: 2 },
+  { subject:'cs', q: "What does the 'www' stand for in a web address?", answers: ["World Wide Web","World Wide Wire","Wide Web World","Web Wide World"], correct: 0, tier: 1 },
+  { subject:'cs', q: "Which of these stores information permanently?", answers: ["Hard Drive","RAM","CPU","Monitor"], correct: 0, tier: 1 },
+  { subject:'cs', q: "What does a mouse do?", answers: ["Controls a cursor on screen","Stores files","Displays images","Connects to the internet"], correct: 0, tier: 1 },
+  { subject:'cs', q: "Is a monitor an input or output device?", answers: ["Output","Input","Both","Neither"], correct: 0, tier: 1 },
+  { subject:'cs', q: "What does RAM stand for?", answers: ["Random Access Memory","Read And Move","Rapid Access Mode","Read All Memory"], correct: 0, tier: 1 },
+
   { subject:'cs', q: "Which number system uses only 0s and 1s?", answers: ["Binary","Decimal","Hexadecimal","Octal"], correct: 0, tier: 2 },
-  { subject:'cs', q: "What is the output of: print(2 + 3 * 4) in Python?", answers: ["14","20","24","10"], correct: 0, tier: 2 },
   { subject:'cs', q: "What does HTML stand for?", answers: ["HyperText Markup Language","High Text Making Language","Hyper Transfer Mode Language","HyperText Making Links"], correct: 0, tier: 2 },
-  { subject:'cs', q: "What is an algorithm?", answers: ["Step-by-step instructions to solve a problem","A type of computer virus","A programming language","A hardware component"], correct: 0, tier: 3 },
-  { subject:'cs', q: "Which data structure uses LIFO (Last In First Out)?", answers: ["Stack","Queue","Array","Graph"], correct: 0, tier: 3 },
+  { subject:'cs', q: "What is an algorithm?", answers: ["Step-by-step instructions to solve a problem","A type of computer virus","A programming language","A piece of hardware"], correct: 0, tier: 2 },
+  { subject:'cs', q: "What is the purpose of a loop in programming?", answers: ["Repeat instructions multiple times","Store data","Display output","Connect to the internet"], correct: 0, tier: 2 },
+  { subject:'cs', q: "What does a firewall do?", answers: ["Protects a network from threats","Speeds up the computer","Stores passwords","Displays web pages"], correct: 0, tier: 2 },
+  { subject:'cs', q: "What type of software is Microsoft Word?", answers: ["Application software","Operating system","Utility software","Programming language"], correct: 0, tier: 2 },
+  { subject:'cs', q: "What is the decimal value of binary 1010?", answers: ["10","8","12","6"], correct: 0, tier: 2 },
+  { subject:'cs', q: "Which of these is an example of an operating system?", answers: ["Windows","Microsoft Word","Google Chrome","Minecraft"], correct: 0, tier: 2 },
+
   { subject:'cs', q: "What does 'if x > 5: print(x)' do in Python?", answers: ["Prints x only if x is greater than 5","Always prints x","Prints 5","Causes an error"], correct: 0, tier: 3 },
-  { subject:'cs', q: "What is the decimal value of binary 1010?", answers: ["10","8","12","6"], correct: 0, tier: 3 },
-  { subject:'cs', q: "What is the purpose of a loop in programming?", answers: ["Repeat code multiple times","Store data","Display output","Connect to the internet"], correct: 0, tier: 3 },
-  { subject:'cs', q: "What type of attack tricks users into revealing passwords?", answers: ["Phishing","Hacking","Malware","Spyware"], correct: 0, tier: 4 },
+  { subject:'cs', q: "What type of attack tricks you into revealing your password?", answers: ["Phishing","Hacking","Malware","Spyware"], correct: 0, tier: 3 },
+  { subject:'cs', q: "What does a variable do in programming?", answers: ["Stores a value","Runs a loop","Displays output","Connects to a network"], correct: 0, tier: 3 },
+  { subject:'cs', q: "What is a strong password?", answers: ["Mix of letters, numbers & symbols","Your name","123456","Your birthday"], correct: 0, tier: 3 },
+  { subject:'cs', q: "What does the = symbol do in Python?", answers: ["Assigns a value to a variable","Checks if two things are equal","Adds two numbers","Prints to screen"], correct: 0, tier: 3 },
+  { subject:'cs', q: "In Python, what does print('Hello') do?", answers: ["Displays Hello on screen","Saves Hello to a file","Stores Hello in a variable","Causes an error"], correct: 0, tier: 3 },
+  { subject:'cs', q: "What does a selection (if/else) do in programming?", answers: ["Makes a decision based on a condition","Repeats code","Stores data","Connects to the internet"], correct: 0, tier: 3 },
+  { subject:'cs', q: "What is the internet?", answers: ["A global network of connected computers","A type of software","A storage device","A programming language"], correct: 0, tier: 3 },
+
+  // ══ CS — Tiers 4–5 (harder, unlocked after 1000 pts) ══
   { subject:'cs', q: "What is the hexadecimal value of decimal 255?", answers: ["FF","FE","EF","F0"], correct: 0, tier: 4 },
+  { subject:'cs', q: "Which data structure uses LIFO order?", answers: ["Stack","Queue","Array","Graph"], correct: 0, tier: 4 },
   { subject:'cs', q: "What does SQL stand for?", answers: ["Structured Query Language","Simple Query Language","Standard Question Logic","System Query Language"], correct: 0, tier: 4 },
-  { subject:'cs', q: "Which sorting algorithm has worst-case O(n²) time complexity?", answers: ["Bubble Sort","Merge Sort","Quick Sort","Heap Sort"], correct: 0, tier: 4 },
-  { subject:'cs', q: "In Python, what does len([1, 2, 3, 4]) return?", answers: ["4","3","5","Error"], correct: 0, tier: 4 },
-  { subject:'cs', q: "What is a primary key in a database?", answers: ["Unique identifier for each record","The first field in a table","A password for the database","The most important query"], correct: 0, tier: 5 },
-  { subject:'cs', q: "What does ASCII stand for?", answers: ["American Standard Code for Information Interchange","Automatic Standard Character Input Interface","Advanced System Code for Information Index","American Standard Computer Instruction Interface"], correct: 0, tier: 5 },
-  { subject:'cs', q: "Which layer of the TCP/IP model handles IP addressing?", answers: ["Internet layer","Transport layer","Application layer","Link layer"], correct: 0, tier: 5 },
+  { subject:'cs', q: "What is the output of: print(2 + 3 * 4) in Python?", answers: ["14","20","24","10"], correct: 0, tier: 4 },
+  { subject:'cs', q: "What is a primary key in a database?", answers: ["Unique identifier for each record","The first field in a table","A password","The most important query"], correct: 0, tier: 4 },
+  { subject:'cs', q: "In Python, what does len([1,2,3,4]) return?", answers: ["4","3","5","Error"], correct: 0, tier: 4 },
+  { subject:'cs', q: "What does ASCII stand for?", answers: ["American Standard Code for Information Interchange","Automatic Standard Character Input Interface","Advanced System Code for Info Index","American Standard Computer Instruction Interface"], correct: 0, tier: 5 },
   { subject:'cs', q: "What is the output of 5 // 2 in Python?", answers: ["2","2.5","3","Error"], correct: 0, tier: 5 },
+  { subject:'cs', q: "Which sorting algorithm works by repeatedly swapping adjacent elements?", answers: ["Bubble Sort","Merge Sort","Binary Search","Quick Sort"], correct: 0, tier: 5 },
+  { subject:'cs', q: "What is two-factor authentication?", answers: ["Using two methods to verify identity","Having two passwords","Logging in twice","Using two devices"], correct: 0, tier: 5 },
 ];
 
 // ─── STATE ───
@@ -781,10 +961,14 @@ let gameRunning = false;
 let questionCount = 0; // even = football, odd = CS
 
 function getTier() {
-  if (score < 30) return 1;
-  if (score < 80) return 2;
-  if (score < 160) return 3;
-  if (score < 300) return 4;
+  // Under 1000 pts: Year 7 friendly tiers 1–3 only
+  if (score < 1000) {
+    if (score < 50)  return 1;
+    if (score < 200) return 2;
+    return 3;
+  }
+  // Over 1000 pts: harder questions unlocked
+  if (score < 1500) return 4;
   return 5;
 }
 
@@ -852,6 +1036,11 @@ function clickBall(event) {
   clicks += 1;
   updateHUD();
   spawnFloat(event);
+
+  // Milestone at 1000 — harder questions unlock
+  if (score === 1000) {
+    showNotif('🔥 1000 pts! Harder questions unlocked!');
+  }
 
   if (clicks >= 10) {
     clicks = 0;
@@ -952,6 +1141,48 @@ function openQuestion() {
   document.getElementById('question-overlay').classList.add('active');
 }
 
+// ─── GOAL CELEBRATION ───
+function triggerGoal() {
+  const scene = document.getElementById('goal-scene');
+  const net   = document.getElementById('goal-net');
+
+  // Reset
+  scene.classList.remove('active');
+  net.classList.remove('bulge');
+
+  // Spawn confetti
+  scene.querySelectorAll('.confetti-piece').forEach(e => e.remove());
+  const colors = ['#f5c518','#4caf50','#2196f3','#e53935','#ffffff','#ff9800'];
+  for (let i = 0; i < 60; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti-piece';
+    c.style.cssText = `
+      left: ${Math.random()*100}%;
+      top: ${-10 - Math.random()*20}px;
+      background: ${colors[Math.floor(Math.random()*colors.length)]};
+      width: ${6+Math.random()*8}px;
+      height: ${6+Math.random()*8}px;
+      animation-duration: ${1.2+Math.random()*1.4}s;
+      animation-delay: ${Math.random()*0.6}s;
+      border-radius: ${Math.random()>0.5?'50%':'2px'};
+    `;
+    scene.appendChild(c);
+  }
+
+  // Show scene
+  void scene.offsetWidth;
+  scene.classList.add('active');
+
+  // Trigger net bulge after ball arrives
+  setTimeout(() => net.classList.add('bulge'), 260);
+
+  // Hide after 2.2s
+  setTimeout(() => {
+    scene.classList.remove('active');
+    net.classList.remove('bulge');
+  }, 2200);
+}
+
 function answerQuestion(isCorrect, clickedEl, answers, container) {
   if (questionAnswered) return;
   questionAnswered = true;
@@ -964,14 +1195,13 @@ function answerQuestion(isCorrect, clickedEl, answers, container) {
     const oldScore = score;
     score = score * 2;
     updateHUD();
-    showFlash('correct');
+    triggerGoal();                    // 🎉 GOAL animation
     setTimeout(() => {
       closeQuestion();
-      showNotif(`🎉 Correct! Score doubled: ${oldScore} → ${score}`);
-    }, 1400);
+      showNotif(`⚽ GOAL! Score doubled: ${oldScore} → ${score}`);
+    }, 2300);
   } else {
     clickedEl.classList.add('wrong');
-    // highlight the correct answer
     clouds.forEach(c => {
       const txt = c.querySelector('.cloud-body').textContent.trim();
       if (txt === currentQuestion.answers[currentQuestion.correct]) {
