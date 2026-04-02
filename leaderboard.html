@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Football Clicker — League Table</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #f5c518; --gold-dark: #c9a000;
+    --navy: #0a1628; --pitch: #2d7a3a; --pitch-dark: #1e5428;
+    --white: #f5f5f5; --red: #e53935;
+    --cs-blue: #3b82f6;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: linear-gradient(160deg, #0a1628 0%, #0e2340 60%, #0a1628 100%);
+    min-height: 100vh;
+    color: var(--white);
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(12px);
+    border-bottom: 2px solid rgba(245,197,24,0.2);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .header-left { display:flex; align-items:center; gap:16px; }
+  .header-ball { font-size: 48px; animation: spinBall 6s linear infinite; }
+  @keyframes spinBall { to { transform: rotate(360deg); } }
+  .header-title h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(28px, 5vw, 48px);
+    color: var(--gold);
+    letter-spacing: 3px;
+    line-height: 1;
+  }
+  .header-title p {
+    font-size: 12px; font-weight: 700; letter-spacing: 2px;
+    color: rgba(255,255,255,0.4); text-transform: uppercase;
+  }
+  .play-btn {
+    padding: 12px 28px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    color: var(--navy);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px; letter-spacing: 1px;
+    border: none; border-radius: 10px; cursor: pointer;
+    text-decoration: none; display: inline-block;
+    box-shadow: 0 4px 16px rgba(245,197,24,0.3);
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .play-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(245,197,24,0.5); }
+
+  /* ── FILTER BAR ── */
+  .filter-bar {
+    display: flex; gap: 10px; align-items: center;
+    padding: 16px 32px;
+    flex-wrap: wrap;
+  }
+  .filter-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; color: rgba(255,255,255,0.4);
+    margin-right: 4px;
+  }
+  .filter-btn {
+    padding: 7px 16px;
+    border-radius: 20px;
+    border: 1.5px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.6);
+    font-family: 'Nunito', sans-serif;
+    font-size: 12px; font-weight: 700;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .filter-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .filter-btn.active {
+    background: var(--gold); border-color: var(--gold); color: var(--navy);
+  }
+  .search-wrap {
+    margin-left: auto;
+    position: relative;
+  }
+  .search-wrap input {
+    padding: 8px 16px 8px 36px;
+    border-radius: 20px;
+    border: 1.5px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.07);
+    color: var(--white);
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px; font-weight: 700;
+    outline: none; width: 180px;
+    transition: border-color 0.2s, width 0.3s;
+  }
+  .search-wrap input:focus { border-color: var(--gold); width: 220px; }
+  .search-wrap input::placeholder { color: rgba(255,255,255,0.25); }
+  .search-icon {
+    position: absolute; left: 12px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px; color: rgba(255,255,255,0.3);
+    pointer-events: none;
+  }
+
+  /* ── STATS ROW ── */
+  .stats-row {
+    display: flex; gap: 16px; padding: 0 32px 20px;
+    flex-wrap: wrap;
+  }
+  .stat-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 14px 24px;
+    min-width: 120px;
+    text-align: center;
+  }
+  .stat-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px; color: var(--gold); line-height: 1;
+  }
+  .stat-lbl {
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    color: rgba(255,255,255,0.4); margin-top: 2px;
+  }
+
+  /* ── TABLE ── */
+  .table-wrap {
+    padding: 0 32px 60px;
+    overflow-x: auto;
+  }
+
+  .loading-msg {
+    text-align: center; padding: 60px 20px;
+    color: rgba(255,255,255,0.4);
+    font-size: 18px; font-weight: 700;
+  }
+  .loading-spinner {
+    font-size: 40px; animation: spinBall 1s linear infinite;
+    display: block; margin-bottom: 16px;
+  }
+
+  .league-table {
+    width: 100%; border-collapse: collapse;
+    min-width: 520px;
+  }
+  .league-table thead th {
+    padding: 10px 16px;
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase;
+    color: rgba(255,255,255,0.35);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    text-align: left;
+  }
+  .league-table thead th.right { text-align: right; }
+
+  .league-table tbody tr {
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    transition: background 0.15s;
+    animation: rowIn 0.4s ease both;
+  }
+  .league-table tbody tr:hover { background: rgba(255,255,255,0.04); }
+
+  @keyframes rowIn {
+    from { opacity: 0; transform: translateX(-12px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .league-table td {
+    padding: 14px 16px;
+    vertical-align: middle;
+  }
+
+  .pos-cell {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px; color: rgba(255,255,255,0.3);
+    width: 50px; text-align: center;
+  }
+  tr:nth-child(1) .pos-cell { color: #ffd700; font-size: 26px; }
+  tr:nth-child(2) .pos-cell { color: #c0c0c0; font-size: 24px; }
+  tr:nth-child(3) .pos-cell { color: #cd7f32; font-size: 22px; }
+
+  .medal { display: none; }
+  tr:nth-child(1) .pos-num { display: none; }
+  tr:nth-child(1) .medal { display: inline; }
+  tr:nth-child(2) .pos-num { display: none; }
+  tr:nth-child(2) .medal { display: inline; }
+  tr:nth-child(3) .pos-num { display: none; }
+  tr:nth-child(3) .medal { display: inline; }
+
+  .player-cell { display: flex; align-items: center; gap: 12px; }
+  .avatar {
+    width: 42px; height: 42px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px; color: var(--navy);
+    flex-shrink: 0;
+    font-weight: 900;
+  }
+  .player-details .pname {
+    font-weight: 900; font-size: 15px; color: var(--white);
+  }
+  .player-details .pmeta {
+    font-size: 11px; color: rgba(255,255,255,0.4);
+    font-weight: 700; letter-spacing: 0.5px;
+  }
+
+  .score-cell {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px; color: var(--gold);
+    text-align: right;
+  }
+  tr:nth-child(1) .score-cell { font-size: 32px; text-shadow: 0 0 20px rgba(245,197,24,0.4); }
+
+  .team-badge {
+    display: inline-block;
+    padding: 3px 10px; border-radius: 12px;
+    font-size: 11px; font-weight: 700;
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.5);
+    white-space: nowrap;
+  }
+
+  .date-cell {
+    font-size: 11px; color: rgba(255,255,255,0.3);
+    font-weight: 700; white-space: nowrap;
+    text-align: right;
+  }
+
+  .bar-cell { width: 120px; }
+  .score-bar-bg {
+    height: 6px; background: rgba(255,255,255,0.08);
+    border-radius: 3px; overflow: hidden;
+  }
+  .score-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold-dark), var(--gold));
+    border-radius: 3px;
+    transition: width 0.8s ease;
+  }
+
+  /* top 3 highlight rows */
+  tr:nth-child(1) { background: rgba(255,215,0,0.04); }
+  tr:nth-child(2) { background: rgba(192,192,192,0.03); }
+  tr:nth-child(3) { background: rgba(205,127,50,0.03); }
+
+  .empty-msg {
+    text-align: center; padding: 60px;
+    color: rgba(255,255,255,0.25);
+    font-size: 16px; font-weight: 700;
+  }
+  .empty-msg span { font-size: 48px; display: block; margin-bottom: 16px; }
+
+  .refresh-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 18px;
+    border-radius: 20px;
+    border: 1.5px solid rgba(255,255,255,0.15);
+    background: transparent;
+    color: rgba(255,255,255,0.5);
+    font-family: 'Nunito', sans-serif;
+    font-size: 12px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
+    margin-left: 8px;
+  }
+  .refresh-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .refresh-btn.spinning span { animation: spinBall 0.6s linear infinite; }
+
+  /* config banner */
+  .config-banner {
+    background: rgba(59,130,246,0.12);
+    border: 1.5px solid rgba(59,130,246,0.3);
+    border-radius: 12px;
+    padding: 14px 20px;
+    margin: 0 32px 16px;
+    font-size: 13px; font-weight: 700;
+    color: rgba(255,255,255,0.7);
+    display: none;
+  }
+  .config-banner.show { display: block; }
+  .config-banner a { color: var(--cs-blue); }
+
+  footer {
+    text-align: center; padding: 20px;
+    font-size: 11px; color: rgba(255,255,255,0.2);
+    font-weight: 700; letter-spacing: 1px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="header-ball">⚽</div>
+    <div class="header-title">
+      <h1>League Table</h1>
+      <p>Football Clicker — Live Standings</p>
+    </div>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+    <button class="refresh-btn" id="refresh-btn" onclick="loadScores()">
+      <span>🔄</span> Refresh
+    </button>
+    <a href="index.html" class="play-btn">⚽ Play Now</a>
+  </div>
+</header>
+
+
+
+<div class="stats-row" id="stats-row">
+  <div class="stat-card">
+    <div class="stat-val" id="stat-players">—</div>
+    <div class="stat-lbl">Players</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-val" id="stat-top">—</div>
+    <div class="stat-lbl">Top Score</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-val" id="stat-avg">—</div>
+    <div class="stat-lbl">Average</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-val" id="stat-updated">—</div>
+    <div class="stat-lbl">Last Updated</div>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <span class="filter-label">Team:</span>
+  <button class="filter-btn active" data-team="all" onclick="setTeamFilter('all',this)">All Teams</button>
+  <div id="team-filters"></div>
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="search-input" placeholder="Search player..." oninput="renderTable()">
+  </div>
+</div>
+
+<div class="table-wrap">
+  <div class="loading-msg" id="loading-msg">
+    <span class="loading-spinner">⚽</span>
+    Loading scores...
+  </div>
+  <table class="league-table" id="league-table" style="display:none">
+    <thead>
+      <tr>
+        <th style="text-align:center">#</th>
+        <th>Player</th>
+        <th>Team</th>
+        <th style="width:130px"></th>
+        <th class="right">Score</th>
+        <th class="right">Date</th>
+      </tr>
+    </thead>
+    <tbody id="table-body"></tbody>
+  </table>
+  <div class="empty-msg" id="empty-msg" style="display:none">
+    <span>🏟️</span>
+    No scores yet — be the first to play!
+  </div>
+</div>
+
+<footer>FOOTBALL CLICKER © CBA COMPUTER SCIENCE</footer>
+
+<script>
+// ── CONFIG — credentials hardcoded ──
+const JSONBIN_BIN_ID  = '69cd85b536566621a86e78cf';
+const JSONBIN_API_KEY = '$2a$10$8x0f4NuJJ6q9PYANsb5FYeC4w280SlER99FvU7olrMZKtx2peHxVy';
+
+// ── AVATAR COLOURS ──
+const AVATAR_COLORS = [
+  '#e53935','#e91e63','#9c27b0','#3f51b5',
+  '#2196f3','#009688','#4caf50','#ff9800','#795548'
+];
+function avatarColor(name) {
+  let h = 0;
+  for (let c of name) h = (h * 31 + c.charCodeAt(0)) & 0xffff;
+  return AVATAR_COLORS[h % AVATAR_COLORS.length];
+}
+function initials(first, last) {
+  return (first[0] || '?').toUpperCase() + (last[0] || '?').toUpperCase();
+}
+
+// ── STATE ──
+let allScores = [];
+let activeTeam = 'all';
+
+// ── LOAD SCORES ──
+async function loadScores() {
+  const btn = document.getElementById('refresh-btn');
+  btn.classList.add('spinning');
+
+  try {
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
+      headers: { 'X-Master-Key': JSONBIN_API_KEY }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    allScores = data.record.scores || [];
+    renderAll();
+  } catch(e) {
+    console.error('loadScores error:', e);
+    document.getElementById('loading-msg').innerHTML =
+      '<span style="font-size:32px">⚠️</span><br>Could not load scores. Check your internet connection.';
+  }
+  btn.classList.remove('spinning');
+}
+
+// Demo data shown when no config
+function showDemoData() {
+  allScores = [
+    { firstName:'Jamie', lastName:'Vardy', squad:'9', team:'Leicester', score:480, date: Date.now()-3600000 },
+    { firstName:'Marcus', lastName:'Smith', squad:'7', team:'England', score:320, date: Date.now()-7200000 },
+    { firstName:'Leah', lastName:'Jones', squad:'11', team:'Arsenal', score:256, date: Date.now()-86400000 },
+    { firstName:'Tyler', lastName:'Brown', squad:'4', team:'CBA FC', score:192, date: Date.now()-172800000 },
+    { firstName:'Priya', lastName:'Patel', squad:'10', team:'CBA FC', score:160, date: Date.now()-259200000 },
+    { firstName:'Callum', lastName:'Wright', squad:'3', team:'Leicester', score:88, date: Date.now()-345600000 },
+  ];
+  renderAll();
+}
+
+// ── RENDER ALL ──
+function renderAll() {
+  buildTeamFilters();
+  updateStats();
+  renderTable();
+  document.getElementById('loading-msg').style.display = 'none';
+}
+
+function buildTeamFilters() {
+  const teams = [...new Set(allScores.map(s => s.team))].sort();
+  const container = document.getElementById('team-filters');
+  container.innerHTML = '';
+  teams.forEach(t => {
+    const btn = document.createElement('button');
+    btn.className = 'filter-btn';
+    btn.dataset.team = t;
+    btn.textContent = t;
+    btn.onclick = () => setTeamFilter(t, btn);
+    container.appendChild(btn);
+  });
+}
+
+function setTeamFilter(team, el) {
+  activeTeam = team;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderTable();
+}
+
+function updateStats() {
+  const scores = allScores.map(s => s.score);
+  document.getElementById('stat-players').textContent = allScores.length;
+  document.getElementById('stat-top').textContent = scores.length ? Math.max(...scores).toLocaleString() : '—';
+  document.getElementById('stat-avg').textContent = scores.length
+    ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length).toLocaleString() : '—';
+  const latest = allScores.length ? Math.max(...allScores.map(s=>s.date||0)) : null;
+  document.getElementById('stat-updated').textContent = latest
+    ? timeAgo(latest) : '—';
+}
+
+function renderTable() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  let data = [...allScores];
+
+  // Filter by team
+  if (activeTeam !== 'all') data = data.filter(s => s.team === activeTeam);
+  // Filter by search
+  if (q) data = data.filter(s =>
+    `${s.firstName} ${s.lastName}`.toLowerCase().includes(q) ||
+    (s.team||'').toLowerCase().includes(q)
+  );
+  // Sort by score desc
+  data.sort((a,b) => b.score - a.score);
+  // Keep best score per player (first+last name match)
+  const seen = new Set();
+  data = data.filter(s => {
+    const key = `${s.firstName}|${s.lastName}|${s.squad}`.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key); return true;
+  });
+
+  const tbody = document.getElementById('table-body');
+  const table = document.getElementById('league-table');
+  const empty = document.getElementById('empty-msg');
+
+  if (data.length === 0) {
+    table.style.display = 'none';
+    empty.style.display = 'block';
+    return;
+  }
+
+  table.style.display = 'table';
+  empty.style.display = 'none';
+
+  const maxScore = data[0].score || 1;
+  tbody.innerHTML = '';
+
+  data.forEach((s, i) => {
+    const medals = ['🥇','🥈','🥉'];
+    const color = avatarColor(`${s.firstName}${s.lastName}`);
+    const pct = Math.round((s.score / maxScore) * 100);
+    const delay = i * 0.05;
+
+    const tr = document.createElement('tr');
+    tr.style.animationDelay = `${delay}s`;
+    tr.innerHTML = `
+      <td class="pos-cell">
+        <span class="medal">${medals[i] || ''}</span>
+        <span class="pos-num">${i+1}</span>
+      </td>
+      <td>
+        <div class="player-cell">
+          <div class="avatar" style="background:${color}">${initials(s.firstName, s.lastName)}</div>
+          <div class="player-details">
+            <div class="pname">${escHtml(s.firstName)} ${escHtml(s.lastName)}</div>
+            <div class="pmeta">#${escHtml(String(s.squad))}</div>
+          </div>
+        </div>
+      </td>
+      <td><span class="team-badge">${escHtml(s.team||'—')}</span></td>
+      <td class="bar-cell">
+        <div class="score-bar-bg">
+          <div class="score-bar-fill" style="width:${pct}%"></div>
+        </div>
+      </td>
+      <td class="score-cell">${Number(s.score).toLocaleString()}</td>
+      <td class="date-cell">${s.date ? timeAgo(s.date) : '—'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function timeAgo(ts) {
+  const diff = Date.now() - ts;
+  const m = Math.floor(diff/60000);
+  const h = Math.floor(diff/3600000);
+  const d = Math.floor(diff/86400000);
+  if (m < 1) return 'Just now';
+  if (m < 60) return `${m}m ago`;
+  if (h < 24) return `${h}h ago`;
+  return `${d}d ago`;
+}
+
+// ── INIT ──
+loadScores();
+// Auto-refresh every 60 seconds
+setInterval(loadScores, 60000);
+</script>
+</body>
+</html>
