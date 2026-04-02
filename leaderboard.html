@@ -398,18 +398,30 @@ async function loadScores() {
   const btn = document.getElementById('refresh-btn');
   btn.classList.add('spinning');
 
+  // Fetch with timeout so spinning never hangs
+  function fetchWithTimeout(url, options, ms = 8000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), ms);
+    return fetch(url, { ...options, signal: controller.signal })
+      .finally(() => clearTimeout(timer));
+  }
+
   try {
-    const res = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
-      headers: { 'X-Master-Key': JSONBIN_API_KEY }
-    });
+    // Cache-bust with timestamp so we always get the freshest data
+    const res = await fetchWithTimeout(
+      `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest?t=${Date.now()}`,
+      { headers: { 'X-Master-Key': JSONBIN_API_KEY, 'Cache-Control': 'no-cache' } }
+    );
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    allScores = data.record.scores || [];
+    allScores = Array.isArray(data.record?.scores) ? data.record.scores : [];
     renderAll();
   } catch(e) {
     console.error('loadScores error:', e);
-    document.getElementById('loading-msg').innerHTML =
-      '<span style="font-size:32px">⚠️</span><br>Could not load scores. Check your internet connection.';
+    const msg = e.name === 'AbortError'
+      ? '<span style="font-size:32px">⏱️</span><br>Request timed out. Check your connection.'
+      : '<span style="font-size:32px">⚠️</span><br>Could not load scores. Check your internet connection.';
+    document.getElementById('loading-msg').innerHTML = msg;
   }
   btn.classList.remove('spinning');
 }

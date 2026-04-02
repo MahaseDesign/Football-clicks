@@ -1045,42 +1045,59 @@ async function submitScore() {
     date:      Date.now()
   };
 
+  // Helper: fetch with a timeout so the button never hangs forever
+  function fetchWithTimeout(url, options, ms = 8000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), ms);
+    return fetch(url, { ...options, signal: controller.signal })
+      .finally(() => clearTimeout(timer));
+  }
+
   try {
-    // Read current scores
-    const getRes = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
-      headers: { 'X-Master-Key': JSONBIN_API_KEY }
-    });
+    // 1. Read current scores (cache-bust with timestamp param)
+    const getRes = await fetchWithTimeout(
+      `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest?t=${Date.now()}`,
+      { headers: { 'X-Master-Key': JSONBIN_API_KEY, 'Cache-Control': 'no-cache' } }
+    );
     if (!getRes.ok) throw new Error(`Read failed: ${getRes.status}`);
     const getData = await getRes.json();
-    const current = getData.record.scores || [];
+    const current = Array.isArray(getData.record?.scores) ? getData.record.scores : [];
 
     current.push(entry);
 
-    // Write back
-    const putRes = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Master-Key': JSONBIN_API_KEY
-      },
-      body: JSON.stringify({ scores: current })
-    });
+    // 2. Write back
+    const putRes = await fetchWithTimeout(
+      `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Master-Key': JSONBIN_API_KEY
+        },
+        body: JSON.stringify({ scores: current })
+      }
+    );
 
     if (putRes.ok) {
       if (submitBtn) {
-        submitBtn.textContent = '✅ Saved to Leaderboard!';
+        submitBtn.textContent = '✅ Saved!';
         submitBtn.style.background = '#4caf50';
         submitBtn.style.color = 'white';
+        submitBtn.disabled = true;
       }
       showNotif('🏆 Score saved to the league table!');
     } else {
-      throw new Error(`Write failed: ${putRes.status}`);
+      const errText = await putRes.text().catch(() => putRes.status);
+      throw new Error(`Write failed: ${errText}`);
     }
   } catch(e) {
     console.error('submitScore error:', e);
+    const msg = e.name === 'AbortError' ? '⏱️ Timed out — try again' : '❌ Save failed — try again';
     if (submitBtn) {
-      submitBtn.textContent = '❌ Save failed — try again';
+      submitBtn.textContent = msg;
       submitBtn.disabled = false;
+      submitBtn.style.background = '';
+      submitBtn.style.color = '';
     }
     showNotif('❌ Could not save score. Check internet connection.');
   }
