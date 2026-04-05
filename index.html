@@ -135,6 +135,7 @@ body{font-family:'Nunito',sans-serif;background:var(--navy);min-height:100vh;ove
 .goal-post-left{position:absolute;top:0;left:0;width:13px;height:100%;background:linear-gradient(90deg,#f2f2f2,#aaa);border-radius:0 0 0 5px;box-shadow:4px 0 16px rgba(0,0,0,0.45),inset 2px 0 0 rgba(255,255,255,0.5);z-index:4;}
 .goal-post-right{position:absolute;top:0;right:0;width:13px;height:100%;background:linear-gradient(270deg,#f2f2f2,#aaa);border-radius:0 0 5px 0;box-shadow:-4px 0 16px rgba(0,0,0,0.45),inset -2px 0 0 rgba(255,255,255,0.5);z-index:4;}
 .goal-net-inner{position:absolute;top:13px;left:13px;right:13px;bottom:0;overflow:hidden;z-index:2;}
+#net-canvas{display:block;width:100%;height:100%;}
 .net-svg{width:100%;height:100%;}
 .goal-grass{position:absolute;bottom:calc(9% - 10px);left:50%;transform:translateX(-50%);width:min(540px,94vw);height:15px;background:linear-gradient(180deg,#3a9648,#2d7a3a);border-radius:3px;box-shadow:0 4px 14px rgba(0,0,0,0.4);}
 #goal-ball{position:absolute;font-size:clamp(42px,9vw,68px);z-index:10;filter:drop-shadow(0 8px 24px rgba(0,0,0,0.7));pointer-events:none;}
@@ -253,21 +254,8 @@ body{font-family:'Nunito',sans-serif;background:var(--navy);min-height:100vh;ove
     <div class="goal-post-left"></div>
     <div class="goal-post-right"></div>
     <div class="goal-net-inner">
-      <svg class="net-svg" id="net-svg" preserveAspectRatio="none" viewBox="0 0 100 60">
-        <defs>
-          <pattern id="netPat" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse">
-            <line x1="0" y1="0" x2="0" y2="8" stroke="rgba(220,235,255,0.55)" stroke-width="0.7"/>
-            <line x1="0" y1="0" x2="8" y2="0" stroke="rgba(220,235,255,0.55)" stroke-width="0.7"/>
-          </pattern>
-        </defs>
-        <rect id="net-bg" x="0" y="0" width="100" height="60" fill="rgba(140,180,255,0.06)"/>
-        <rect x="0" y="0" width="100" height="60" fill="url(#netPat)"/>
-        <!-- bulge ellipse — grows on impact, clearly visible -->
-        <ellipse id="net-bulge" cx="50" cy="26" rx="0" ry="0"
-          fill="rgba(180,215,255,0.22)"
-          stroke="rgba(255,255,255,0.7)"
-          stroke-width="1.2"/>
-      </svg>
+      <!-- Canvas net — lines physically pushed by ball impact -->
+      <canvas id="net-canvas"></canvas>
     </div>
   </div>
 </div>
@@ -474,93 +462,97 @@ let gameRunning=false, questionCount=0;
 let currentLevel=0, timerSecsLeft=180, timerInterval=null;
 
 // ═══════════════════════════════
-// CROWD CHEER — Web Audio
+// "GOAAAL" VOICE — Web Audio
 // ═══════════════════════════════
 function playCrowdCheer(){
   try{
-    const ctx=new(window.AudioContext||window.webkitAudioContext)();
-    const now=ctx.currentTime;
+    const ctx = new(window.AudioContext||window.webkitAudioContext)();
+    const now = ctx.currentTime;
 
-    // Master bus with gentle swell envelope
-    const master=ctx.createGain();
-    master.gain.setValueAtTime(0,now);
-    master.gain.linearRampToValueAtTime(0.55,now+0.35);   // slow swell in
-    master.gain.linearRampToValueAtTime(0.65,now+0.9);
-    master.gain.setValueAtTime(0.65,now+1.6);
-    master.gain.linearRampToValueAtTime(0,now+3.0);        // fade out
+    const master = ctx.createGain();
+    master.gain.setValueAtTime(0, now);
+    master.gain.linearRampToValueAtTime(0.7, now+0.1);
+    master.gain.setValueAtTime(0.7, now+1.6);
+    master.gain.linearRampToValueAtTime(0, now+2.6);
     master.connect(ctx.destination);
 
-    // Soft reverb-like delay to thicken the crowd
-    const delay=ctx.createDelay(0.08);
-    delay.delayTime.value=0.055;
-    const delayGain=ctx.createGain();
-    delayGain.gain.value=0.28;
-    master.connect(delay);
-    delay.connect(delayGain);
-    delayGain.connect(master);
+    // Build a voice from sine harmonics (much less buzzy than sawtooth)
+    // Deep male voice ~100Hz fundamental
+    const fundamentals = [98, 102, 105, 99, 101, 107];
 
-    // ── Many detuned voices rising together ──
-    const voiceCount=40;
-    for(let i=0;i<voiceCount;i++){
-      const osc=ctx.createOscillator();
-      const vg=ctx.createGain();
-      const bp=ctx.createBiquadFilter();
+    fundamentals.forEach((f0, vi) => {
+      const voiceOut = ctx.createGain();
+      voiceOut.gain.setValueAtTime(0, now);
+      voiceOut.gain.linearRampToValueAtTime(0.14, now + 0.08 + vi*0.02);
+      voiceOut.gain.setValueAtTime(0.14, now+1.7);
+      voiceOut.gain.linearRampToValueAtTime(0, now+2.7);
+      voiceOut.connect(master);
 
-      // Spread pitches: low voices 150–300Hz, mid 300–550Hz
-      const band=i<20?150+i*7.5:300+((i-20)*12.5);
-      const detune=(Math.random()-0.5)*60;
-      osc.type=i%4===0?'sawtooth':'triangle';
-      osc.frequency.value=band;
-      osc.detune.value=detune;
+      // Add harmonics 1–6 with falling amplitude (voice-like spectrum)
+      // Harmonic amplitudes: 1=1.0, 2=0.5, 3=0.25, 4=0.12, 5=0.08, 6=0.05
+      const harmAmps = [1.0, 0.5, 0.25, 0.12, 0.08, 0.05];
+      harmAmps.forEach((amp, hi) => {
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(f0 * (hi+1), now);
+        // Gentle pitch rise — "GOA" lift
+        osc.frequency.linearRampToValueAtTime(f0*(hi+1)*1.04, now+0.3);
+        osc.frequency.linearRampToValueAtTime(f0*(hi+1)*1.06, now+0.9);
+        osc.frequency.linearRampToValueAtTime(f0*(hi+1)*1.04, now+2.2);
 
-      // Gentle pitch rise — "ohhhh" rising to "yayyy"
-      osc.frequency.setValueAtTime(band*0.92,now);
-      osc.frequency.linearRampToValueAtTime(band*1.0, now+0.4);
-      osc.frequency.linearRampToValueAtTime(band*1.06,now+1.1);
-      osc.frequency.linearRampToValueAtTime(band*1.03,now+2.5);
+        const hg = ctx.createGain();
+        hg.gain.value = amp * 0.12;
+        osc.connect(hg);
+        hg.connect(voiceOut);
+        osc.start(now + vi*0.02);
+        osc.stop(now + 2.9);
+      });
 
-      // Slight vibrato — natural voice wobble
-      const lfo=ctx.createOscillator();
-      const lfog=ctx.createGain();
-      lfo.frequency.value=4.2+Math.random()*2.5;
-      lfog.gain.value=2.5+Math.random()*3;
-      lfo.connect(lfog); lfog.connect(osc.frequency);
-      lfo.start(now); lfo.stop(now+3.2);
+      // Formant filters to shape vowel "OHH" → "AAH"
+      // Without these it sounds like a tone; with them it sounds like a voice
+      const f1 = ctx.createBiquadFilter();
+      f1.type = 'peaking'; f1.Q.value = 3;
+      f1.gain.value = 14;
+      f1.frequency.setValueAtTime(520, now);
+      f1.frequency.linearRampToValueAtTime(780, now+0.4);  // OH→AH
+      f1.frequency.linearRampToValueAtTime(720, now+2.0);
 
-      // Each voice enters slightly staggered — crowd effect
-      const startOffset=Math.random()*0.25;
-      vg.gain.setValueAtTime(0,now+startOffset);
-      vg.gain.linearRampToValueAtTime(0.006+Math.random()*0.009,now+startOffset+0.3);
-      vg.gain.linearRampToValueAtTime(vg.gain.value,now+1.8);
-      vg.gain.linearRampToValueAtTime(0,now+3.0+Math.random()*0.2);
+      const f2 = ctx.createBiquadFilter();
+      f2.type = 'peaking'; f2.Q.value = 4;
+      f2.gain.value = 10;
+      f2.frequency.setValueAtTime(820, now);
+      f2.frequency.linearRampToValueAtTime(1200, now+0.4);
+      f2.frequency.linearRampToValueAtTime(1100, now+2.0);
 
-      // Bandpass per voice to shape vowel formant
-      bp.type='bandpass';
-      bp.frequency.value=400+Math.random()*1200;
-      bp.Q.value=0.8+Math.random()*1.5;
+      // Low-pass to remove any remaining harshness above 3kHz
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 3000;
+      lp.Q.value = 0.5;
 
-      osc.connect(bp); bp.connect(vg); vg.connect(master);
-      osc.start(now+startOffset);
-      osc.stop(now+3.3);
-    }
+      voiceOut.connect(f1);
+      f1.connect(f2);
+      f2.connect(lp);
+      lp.connect(master);
+      // Disconnect direct path — route through filters instead
+      voiceOut.disconnect(master);
+    });
 
-    // ── Soft noise bed: distant crowd texture ──
-    const noiseLen=ctx.sampleRate*3.2;
-    const nBuf=ctx.createBuffer(1,noiseLen,ctx.sampleRate);
-    const nd=nBuf.getChannelData(0);
-    for(let i=0;i<noiseLen;i++) nd[i]=(Math.random()*2-1);
-    const nSrc=ctx.createBufferSource();
-    nSrc.buffer=nBuf;
-    const nGain=ctx.createGain();
-    nGain.gain.setValueAtTime(0,now);
-    nGain.gain.linearRampToValueAtTime(0.04,now+0.5);
-    nGain.gain.linearRampToValueAtTime(0.03,now+1.8);
-    nGain.gain.linearRampToValueAtTime(0,now+3.0);
-    // Shape: remove low rumble and high hiss — leave only mid crowd texture
-    const hp=ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=500;
-    const lp=ctx.createBiquadFilter(); lp.type='lowpass';  lp.frequency.value=2800;
-    nSrc.connect(hp); hp.connect(lp); lp.connect(nGain); nGain.connect(master);
-    nSrc.start(now); nSrc.stop(now+3.2);
+    // Very soft breath/air underneath — barely audible, just adds humanness
+    const breathLen = ctx.sampleRate * 2.5;
+    const bBuf = ctx.createBuffer(1, breathLen, ctx.sampleRate);
+    const bd = bBuf.getChannelData(0);
+    for(let i=0;i<breathLen;i++) bd[i]=(Math.random()*2-1);
+    const bSrc = ctx.createBufferSource();
+    bSrc.buffer = bBuf;
+    const bHp = ctx.createBiquadFilter(); bHp.type='highpass'; bHp.frequency.value=800;
+    const bLp = ctx.createBiquadFilter(); bLp.type='lowpass';  bLp.frequency.value=2400;
+    const bGain = ctx.createGain();
+    bGain.gain.setValueAtTime(0, now);
+    bGain.gain.linearRampToValueAtTime(0.018, now+0.15);
+    bGain.gain.linearRampToValueAtTime(0, now+2.5);
+    bSrc.connect(bHp); bHp.connect(bLp); bLp.connect(bGain); bGain.connect(master);
+    bSrc.start(now); bSrc.stop(now+2.6);
 
   }catch(e){}
 }
@@ -801,40 +793,42 @@ function showFlash(type){
 // ═══════════════════════════════
 function triggerGoal(){
   playCrowdCheer();
-  const scene=document.getElementById('goal-scene');
-  const ball=document.getElementById('goal-ball');
-  const frame=scene.querySelector('.goal-frame');
-  const bulge=document.getElementById('net-bulge');
-  const netBg=document.getElementById('net-bg');
+  const scene = document.getElementById('goal-scene');
+  const ball  = document.getElementById('goal-ball');
+  const frame = scene.querySelector('.goal-frame');
 
   // Reset
   scene.classList.remove('active');
   scene.querySelectorAll('.confetti-piece').forEach(e=>e.remove());
-  bulge.setAttribute('rx','0'); bulge.setAttribute('ry','0');
-  ball.style.cssText=''; void scene.offsetWidth;
+  if(netAnimId) cancelAnimationFrame(netAnimId);
+  ball.style.cssText='';
+  void scene.offsetWidth;
 
   // Activate + measure
-  scene.classList.add('active'); void scene.offsetWidth;
-  const fr=frame.getBoundingClientRect();
-  const tx=fr.left+fr.width*0.5;
-  const ty=fr.top+fr.height*0.28;
-  const sx=window.innerWidth*0.5;
-  const sy=-65;
+  scene.classList.add('active');
+  void scene.offsetWidth;
+  const fr = frame.getBoundingClientRect();
+  const tx = fr.left + fr.width  * 0.5;
+  const ty = fr.top  + fr.height * 0.28;
+  const sx = window.innerWidth  * 0.5;
+  const sy = -65;
+
+  // Draw resting net straight away
+  animateBulge();  // draws static net
 
   // Place ball at start
   ball.style.cssText=`position:absolute;font-size:clamp(42px,9vw,68px);left:${sx}px;top:${sy}px;transform:translate(-50%,0) scale(0.16) rotate(0deg);filter:drop-shadow(0 8px 24px rgba(0,0,0,0.7));z-index:10;pointer-events:none;`;
   void ball.offsetWidth;
 
-  const flyMs=560;
+  const flyMs = 560;
   ball.animate([
-    {left:sx+'px',top:sy+'px',transform:'translate(-50%,0) scale(0.16) rotate(0deg)',opacity:'1'},
-    {left:(sx+(tx-sx)*0.55)+'px',top:(sy+(ty-sy)*0.52)+'px',transform:'translate(-50%,0) scale(0.82) rotate(320deg)',opacity:'1',offset:0.56},
-    {left:tx+'px',top:ty+'px',transform:'translate(-50%,0) scale(1.1) rotate(555deg)',opacity:'1'},
-  ],{duration:flyMs,easing:'cubic-bezier(0.25,0.46,0.45,0.94)',fill:'forwards'});
+    {left:sx+'px', top:sy+'px',             transform:'translate(-50%,0) scale(0.16) rotate(0deg)',   opacity:'1'},
+    {left:(sx+(tx-sx)*0.55)+'px', top:(sy+(ty-sy)*0.52)+'px', transform:'translate(-50%,0) scale(0.82) rotate(320deg)', opacity:'1', offset:0.56},
+    {left:tx+'px', top:ty+'px',             transform:'translate(-50%,0) scale(1.1)  rotate(555deg)', opacity:'1'},
+  ],{duration:flyMs, easing:'cubic-bezier(0.25,0.46,0.45,0.94)', fill:'forwards'});
 
-  // NET BULGE — direct SVG attribute setting with requestAnimationFrame
-  const bd=flyMs-40;
-  setTimeout(()=>{ animateBulge(bulge,netBg); },bd);
+  // Trigger net bulge when ball arrives
+  setTimeout(()=>{ animateBulge(); }, flyMs - 40);
 
   // Confetti
   const cols=['#f5c518','#4caf50','#2196f3','#e53935','#fff','#ff9800','#e91e63'];
@@ -849,53 +843,136 @@ function triggerGoal(){
   setTimeout(()=>{
     scene.classList.remove('active');
     ball.style.cssText='';
-    bulge.setAttribute('rx','0');
-    bulge.setAttribute('ry','0');
-  },2500);
+    if(netAnimId){ cancelAnimationFrame(netAnimId); netAnimId=null; }
+  }, 2500);
 }
 
-// ── Reliable SVG bulge using JS tween ──
-function animateBulge(bulge, netBg){
-  // Keyframes: [time_ms, rx, ry, bgAlpha]
-  const keys=[
-    [0,   0,  0,  0.06],
-    [160, 54, 34, 0.30],   // slam in
-    [300, 46, 28, 0.22],   // first bounce back
-    [400, 51, 31, 0.26],   // second bounce
-    [520, 43, 26, 0.18],   // settle
-    [750, 43, 26, 0.18],   // hold
-    [1050, 0,  0,  0.06],  // return to flat
-  ];
-  const start=performance.now();
-  function lerp(a,b,t){return a+(b-a)*t;}
-  function ease(t){return t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;}
+// ═══════════════════════════════
+// CANVAS NET — physically deforms grid lines
+// ═══════════════════════════════
+let netAnimId = null;
+
+function animateBulge(){
+  const canvas = document.getElementById('net-canvas');
+  const inner  = canvas.parentElement;
+  // Size canvas to fill the net-inner div
+  canvas.width  = inner.offsetWidth  || 300;
+  canvas.height = inner.offsetHeight || 140;
+  const W = canvas.width, H = canvas.height;
+  const ctx = canvas.getContext('2d');
+
+  const cols = Math.ceil(W / 22) + 1;
+  const rows = Math.ceil(H / 22) + 1;
+  const cw = W / (cols-1);   // cell width
+  const ch = H / (rows-1);   // cell height
+
+  // Impact centre (upper-centre of net)
+  const cx = W * 0.5;
+  const cy = H * 0.3;
+
+  // Bulge state: radius grows then springs back
+  let bulgeR  = 0;
+  let velocity = 180;   // px/s — rapid initial expansion
+  const maxR   = Math.min(W, H) * 0.55;
+  let phase    = 'expand';  // expand → spring → settle → retreat
+  let settled  = 0;
+  const startT = performance.now();
+
+  if(netAnimId) cancelAnimationFrame(netAnimId);
+
+  function drawNet(bulge){
+    ctx.clearRect(0,0,W,H);
+
+    // Net line style
+    ctx.strokeStyle = 'rgba(210,230,255,0.75)';
+    ctx.lineWidth   = 1.2;
+
+    // Draw vertical lines
+    for(let c=0; c<cols; c++){
+      ctx.beginPath();
+      for(let r=0; r<rows; r++){
+        // Grid point
+        const gx = c * cw;
+        const gy = r * ch;
+        // Distance from impact centre
+        const dx = gx - cx;
+        const dy = gy - cy;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        // Radial displacement: points inside bulge radius get pushed outward
+        let push = 0;
+        if(dist < bulge && dist > 0){
+          // Smooth falloff — peak at centre, 0 at edge
+          const t = 1 - (dist/bulge);
+          push = t * t * bulge * 0.42;
+        }
+        const nx = gx + (dist>0?(dx/dist)*push:0);
+        const ny = gy + (dist>0?(dy/dist)*push:0);
+        if(r===0) ctx.moveTo(nx,ny); else ctx.lineTo(nx,ny);
+      }
+      ctx.stroke();
+    }
+
+    // Draw horizontal lines
+    for(let r=0; r<rows; r++){
+      ctx.beginPath();
+      for(let c=0; c<cols; c++){
+        const gx = c * cw;
+        const gy = r * ch;
+        const dx = gx - cx;
+        const dy = gy - cy;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        let push = 0;
+        if(dist < bulge && dist > 0){
+          const t = 1 - (dist/bulge);
+          push = t * t * bulge * 0.42;
+        }
+        const nx = gx + (dist>0?(dx/dist)*push:0);
+        const ny = gy + (dist>0?(dy/dist)*push:0);
+        if(c===0) ctx.moveTo(nx,ny); else ctx.lineTo(nx,ny);
+      }
+      ctx.stroke();
+    }
+  }
+
+  let lastT = performance.now();
 
   function frame(now){
-    const elapsed=now-start;
-    // find surrounding keys
-    let k0=keys[0], k1=keys[keys.length-1];
-    for(let i=0;i<keys.length-1;i++){
-      if(elapsed>=keys[i][0]&&elapsed<=keys[i+1][0]){
-        k0=keys[i]; k1=keys[i+1]; break;
+    const dt = Math.min((now - lastT)/1000, 0.05);  // seconds, capped
+    lastT = now;
+
+    if(phase === 'expand'){
+      bulgeR += velocity * dt;
+      velocity = Math.max(velocity - 420*dt, 0);
+      if(bulgeR >= maxR * 0.85 || velocity <= 0){
+        phase = 'spring';
+        velocity = -65;   // spring back
       }
+    } else if(phase === 'spring'){
+      bulgeR += velocity * dt;
+      velocity += 90 * dt;  // spring constant pulls back
+      if(bulgeR <= maxR * 0.6){
+        phase = 'settle';
+        velocity = 20;
+      }
+    } else if(phase === 'settle'){
+      bulgeR += velocity * dt;
+      velocity -= 55 * dt;
+      if(velocity <= 0){ phase = 'hold'; settled = now; }
+    } else if(phase === 'hold'){
+      // Hold the settled bulge briefly
+      if(now - settled > 400) phase = 'retreat';
+    } else if(phase === 'retreat'){
+      bulgeR -= 60 * dt;
+      if(bulgeR <= 0){ bulgeR=0; drawNet(0); return; }
     }
-    if(elapsed>=keys[keys.length-1][0]){
-      bulge.setAttribute('rx','0');
-      bulge.setAttribute('ry','0');
-      netBg.setAttribute('fill','rgba(140,180,255,0.06)');
-      return;
-    }
-    const seg=k1[0]-k0[0];
-    const t=seg>0?ease(Math.min((elapsed-k0[0])/seg,1)):1;
-    const rx=lerp(k0[1],k1[1],t);
-    const ry=lerp(k0[2],k1[2],t);
-    const alpha=lerp(k0[3],k1[3],t);
-    bulge.setAttribute('rx',rx.toFixed(1));
-    bulge.setAttribute('ry',ry.toFixed(1));
-    netBg.setAttribute('fill',`rgba(140,180,255,${alpha.toFixed(3)})`);
-    requestAnimationFrame(frame);
+
+    drawNet(bulgeR);
+    netAnimId = requestAnimationFrame(frame);
   }
-  requestAnimationFrame(frame);
+
+  // Draw resting net immediately
+  drawNet(0);
+  netAnimId = requestAnimationFrame(frame);
 }
 
 // ═══════════════════════════════
