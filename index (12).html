@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Football Clicker</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --pitch:#2d7a3a; --pitch-dark:#1e5428;
+  --white:#f5f5f5; --gold:#f5c518; --gold-dark:#c9a000;
+  --red:#e53935; --navy:#0a1628;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Nunito',sans-serif;background:var(--navy);min-height:100vh;overflow-x:hidden;display:flex;align-items:center;justify-content:center;}
+
+/* SIGN-IN */
+#signin-screen{position:fixed;inset:0;z-index:100;background:linear-gradient(160deg,#0a1628,#1a3a5c,#0d2137);display:flex;align-items:center;justify-content:center;flex-direction:column;}
+.signin-card{background:rgba(255,255,255,0.05);border:2px solid rgba(255,255,255,0.12);border-radius:24px;padding:44px 36px;width:min(420px,92vw);text-align:center;backdrop-filter:blur(12px);box-shadow:0 32px 80px rgba(0,0,0,0.5);}
+.signin-ball{font-size:68px;animation:spinBall 4s linear infinite;display:inline-block;margin-bottom:10px;}
+@keyframes spinBall{to{transform:rotate(360deg);}}
+.signin-title{font-family:'Bebas Neue',sans-serif;font-size:48px;color:var(--white);letter-spacing:3px;line-height:1;margin-bottom:4px;}
+.signin-sub{color:var(--gold);font-weight:700;font-size:13px;letter-spacing:2px;text-transform:uppercase;margin-bottom:28px;}
+.field-group{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.input-wrap label{display:block;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-bottom:5px;text-align:left;}
+.input-wrap input{width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:var(--white);font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;outline:none;transition:border-color 0.2s;}
+.input-wrap input:focus{border-color:var(--gold);}
+.input-wrap input::placeholder{color:rgba(255,255,255,0.25);}
+.kick-off-btn{width:100%;padding:15px;border-radius:12px;border:none;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:var(--navy);font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:2px;cursor:pointer;margin-top:8px;box-shadow:0 6px 24px rgba(245,197,24,0.35);transition:transform 0.1s;}
+.kick-off-btn:hover{transform:translateY(-2px);}
+.err-msg{color:var(--red);font-size:13px;margin-top:8px;min-height:18px;}
+
+/* GAME SCREEN */
+#game-screen{display:none;width:100vw;min-height:100vh;background:linear-gradient(180deg,#87ceeb 0%,#b8e0f7 36%,#2d7a3a 36%);flex-direction:column;align-items:center;position:relative;}
+#game-screen::before{content:'';position:absolute;bottom:0;left:0;right:0;height:64%;background:repeating-linear-gradient(90deg,var(--pitch) 0,var(--pitch) 60px,var(--pitch-dark) 60px,var(--pitch-dark) 120px);z-index:0;}
+
+/* HUD */
+.hud{position:relative;z-index:10;width:100%;display:flex;justify-content:space-between;align-items:center;padding:10px 14px 8px;background:rgba(10,22,40,0.88);backdrop-filter:blur(8px);flex-wrap:wrap;gap:6px;}
+.player-badge{display:flex;align-items:center;gap:8px;}
+.squad-num{font-family:'Bebas Neue',sans-serif;font-size:30px;color:var(--gold);line-height:1;}
+.player-name{font-weight:900;font-size:13px;color:var(--white);}
+.player-team{font-size:10px;color:rgba(255,255,255,0.5);font-weight:700;letter-spacing:1px;}
+.score-display{text-align:center;}
+.score-label{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.4);}
+.score-num{font-family:'Bebas Neue',sans-serif;font-size:42px;color:var(--gold);line-height:1;text-shadow:0 0 20px rgba(245,197,24,0.4);}
+.score-num.pop{animation:scorePop 0.15s ease;}
+@keyframes scorePop{50%{transform:scale(1.28);}}
+.clicks-left{text-align:center;}
+.clicks-num{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--white);line-height:1;}
+.clicks-label{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.4);}
+.hud-btn{padding:7px 11px;border-radius:9px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;text-decoration:none;cursor:pointer;transition:background 0.2s;border:1.5px solid;}
+.hud-btn-gold{background:rgba(245,197,24,0.12);border-color:rgba(245,197,24,0.35);color:var(--gold);}
+.hud-btn-gold:hover{background:rgba(245,197,24,0.25);}
+.hud-btn-red{background:rgba(229,57,53,0.12);border-color:rgba(229,57,53,0.35);color:#ff6b6b;}
+.hud-btn-red:hover{background:rgba(229,57,53,0.25);}
+
+/* LEVEL + TIMER BAR */
+.level-bar{position:relative;z-index:10;width:100%;display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.35);padding:6px 14px;flex-wrap:wrap;}
+.level-badge{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;padding:3px 11px;border-radius:20px;white-space:nowrap;}
+.level-1-badge{background:rgba(76,175,80,0.22);color:#4caf50;border:1.5px solid rgba(76,175,80,0.4);}
+.level-2-badge{background:rgba(245,197,24,0.18);color:var(--gold);border:1.5px solid rgba(245,197,24,0.4);}
+.level-3-badge{background:rgba(229,57,53,0.18);color:#ff6b6b;border:1.5px solid rgba(229,57,53,0.4);}
+.timer-wrap{flex:1;display:flex;align-items:center;gap:7px;}
+.timer-num{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--white);min-width:42px;}
+.timer-num.warning{color:#ff9800;animation:timerPulse 0.5s ease infinite;}
+.timer-num.danger{color:var(--red);animation:timerPulse 0.3s ease infinite;}
+@keyframes timerPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.16);}}
+.timer-bar-bg{flex:1;height:7px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden;}
+.timer-bar-fill{height:100%;border-radius:4px;transition:width 0.5s linear,background 0.5s;}
+.target-badge{font-size:11px;font-weight:700;color:rgba(255,255,255,0.4);white-space:nowrap;}
+
+/* SCORE PROGRESS BAR */
+.progress-bar-wrap{position:relative;z-index:10;width:calc(100% - 28px);height:5px;background:rgba(255,255,255,0.1);border-radius:3px;margin:4px 14px 0;}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold-dark),var(--gold));border-radius:3px;transition:width 0.3s;}
+
+/* BALL */
+.game-field{position:relative;z-index:5;width:100%;flex:1;display:flex;align-items:center;justify-content:center;}
+#football{font-size:clamp(80px,14vw,116px);cursor:pointer;user-select:none;z-index:10;position:relative;transition:filter 0.07s;filter:drop-shadow(0 8px 18px rgba(0,0,0,0.4));}
+#football:active{transform:scale(0.87);}
+#football.kick{animation:kickAnim 0.22s ease-out;}
+#football.glow{filter:drop-shadow(0 0 22px rgba(245,197,24,1)) drop-shadow(0 0 44px rgba(245,197,24,0.55)) drop-shadow(0 8px 18px rgba(0,0,0,0.4));}
+@keyframes kickAnim{0%{transform:scale(1);}40%{transform:scale(0.83) rotate(-12deg);}100%{transform:scale(1) rotate(0);}}
+
+/* FLOAT +1 */
+.float-score{position:absolute;font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--gold);text-shadow:0 2px 8px rgba(0,0,0,0.4);pointer-events:none;animation:floatUp 0.85s ease-out forwards;z-index:20;}
+@keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1);}100%{opacity:0;transform:translateY(-76px) scale(1.28);}}
+
+/* CLOUD QUESTION OVERLAY */
+#question-overlay{display:none;position:fixed;inset:0;z-index:200;pointer-events:none;}
+#question-overlay.active{display:block;pointer-events:all;}
+.sky-bg{position:absolute;inset:0;background:linear-gradient(180deg,rgba(135,206,235,0.97),rgba(184,224,247,0.98));animation:skyFadeIn 0.35s ease;}
+@keyframes skyFadeIn{from{opacity:0;}to{opacity:1;}}
+.question-header{position:absolute;top:50px;left:0;right:0;text-align:center;z-index:10;padding:0 14px;}
+.question-header h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(20px,4.5vw,40px);color:var(--navy);letter-spacing:2px;text-shadow:0 2px 0 rgba(255,255,255,0.5);}
+.question-header p{font-size:clamp(11px,2vw,15px);color:var(--navy);font-weight:700;margin-top:5px;}
+.double-badge{display:inline-block;background:var(--gold);color:var(--navy);font-family:'Bebas Neue',sans-serif;font-size:17px;padding:3px 14px;border-radius:20px;letter-spacing:1px;margin-bottom:5px;box-shadow:0 4px 12px rgba(245,197,24,0.4);}
+.cloud-container{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:26px 20px;padding:200px 20px 90px;align-content:center;}
+.cloud-answer{position:relative;cursor:pointer;width:min(245px,40vw);min-width:136px;text-align:center;animation:cloudFloat 3s ease-in-out infinite;filter:drop-shadow(0 5px 13px rgba(0,0,0,0.15));transition:filter 0.18s;}
+.cloud-answer:nth-child(2){animation-delay:-1s;}
+.cloud-answer:nth-child(3){animation-delay:-2s;}
+.cloud-answer:nth-child(4){animation-delay:-0.5s;}
+@keyframes cloudFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+.cloud-answer:hover{filter:drop-shadow(0 10px 22px rgba(0,0,0,0.26));transform:scale(1.05);}
+.cloud-wrap{position:relative;width:100%;}
+.cloud-bumps{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-around;padding:0 15px;transform:translateY(-55%);pointer-events:none;}
+.cloud-bump{background:#fff;border-radius:50%;}
+.cloud-bump-1{width:48px;height:48px;}
+.cloud-bump-2{width:36px;height:36px;margin-top:8px;}
+.cloud-bump-3{width:30px;height:30px;margin-top:14px;}
+.cloud-body{background:#fff;border-radius:36px;padding:15px 16px 13px;font-family:'Nunito',sans-serif;font-weight:900;font-size:clamp(12px,2.3vw,15px);color:var(--navy);line-height:1.3;position:relative;z-index:2;word-break:break-word;}
+.cloud-answer.correct .cloud-body,.cloud-answer.correct .cloud-bump{background:#4caf50;color:#fff;}
+.cloud-answer.correct{animation:correctPop 0.5s ease forwards;}
+.cloud-answer.wrong .cloud-body,.cloud-answer.wrong .cloud-bump{background:var(--red);color:#fff;}
+.cloud-answer.wrong{animation:wrongShake 0.4s ease forwards;}
+.cloud-answer.show-correct .cloud-body,.cloud-answer.show-correct .cloud-bump{background:#4caf50;color:#fff;}
+@keyframes correctPop{0%{transform:scale(1);}50%{transform:scale(1.15);}100%{transform:scale(1);}}
+@keyframes wrongShake{0%,100%{transform:translateX(0);}25%{transform:translateX(-8px);}75%{transform:translateX(8px);}}
+.skip-btn{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);padding:10px 26px;background:rgba(10,22,40,0.7);border:2px solid rgba(255,255,255,0.3);border-radius:30px;color:rgba(255,255,255,0.7);font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:1px;transition:all 0.2s;z-index:20;}
+.skip-btn:hover{background:rgba(10,22,40,0.9);color:#fff;}
+
+/* RESULT FLASH */
+.result-flash{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:300;pointer-events:none;opacity:0;}
+.result-flash.show{animation:flashAnim 1.4s ease forwards;}
+@keyframes flashAnim{0%{opacity:0;}20%{opacity:1;}70%{opacity:1;}100%{opacity:0;}}
+.result-flash-text{font-family:'Bebas Neue',sans-serif;font-size:clamp(46px,12vw,92px);letter-spacing:4px;text-shadow:0 4px 24px rgba(0,0,0,0.5);}
+.wrong-flash .result-flash-text{color:var(--red);}
+
+/* GOAL SCENE */
+#goal-scene{display:none;position:fixed;inset:0;z-index:350;pointer-events:none;overflow:hidden;background:rgba(4,12,26,0.86);}
+#goal-scene.active{display:block;}
+.goal-crowd-flash{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 65%,rgba(245,197,24,0.48) 0%,transparent 65%);animation:crowdPulse 2.2s ease forwards;}
+@keyframes crowdPulse{0%{opacity:0;}18%{opacity:1;}55%{opacity:0.62;}100%{opacity:0;}}
+.goal-frame{position:absolute;bottom:9%;left:50%;transform:translateX(-50%);width:min(480px,88vw);height:min(220px,36vw);}
+.goal-crossbar{position:absolute;top:0;left:0;right:0;height:13px;background:linear-gradient(180deg,#f2f2f2,#aaa);border-radius:5px 5px 0 0;box-shadow:0 4px 16px rgba(0,0,0,0.55),inset 0 2px 0 rgba(255,255,255,0.6);z-index:4;}
+.goal-post-left{position:absolute;top:0;left:0;width:13px;height:100%;background:linear-gradient(90deg,#f2f2f2,#aaa);border-radius:0 0 0 5px;box-shadow:4px 0 16px rgba(0,0,0,0.45),inset 2px 0 0 rgba(255,255,255,0.5);z-index:4;}
+.goal-post-right{position:absolute;top:0;right:0;width:13px;height:100%;background:linear-gradient(270deg,#f2f2f2,#aaa);border-radius:0 0 5px 0;box-shadow:-4px 0 16px rgba(0,0,0,0.45),inset -2px 0 0 rgba(255,255,255,0.5);z-index:4;}
+.goal-net-inner{position:absolute;top:13px;left:13px;right:13px;bottom:0;overflow:hidden;z-index:2;}
+#net-canvas{display:block;width:100%;height:100%;}
+.net-svg{width:100%;height:100%;}
+.goal-grass{position:absolute;bottom:calc(9% - 10px);left:50%;transform:translateX(-50%);width:min(540px,94vw);height:15px;background:linear-gradient(180deg,#3a9648,#2d7a3a);border-radius:3px;box-shadow:0 4px 14px rgba(0,0,0,0.4);}
+#goal-ball{position:absolute;font-size:clamp(42px,9vw,68px);z-index:10;filter:drop-shadow(0 8px 24px rgba(0,0,0,0.7));pointer-events:none;}
+.goal-text{position:absolute;top:13%;left:50%;transform:translateX(-50%) scale(0);font-family:'Bebas Neue',sans-serif;font-size:clamp(78px,20vw,152px);color:var(--gold);letter-spacing:8px;text-shadow:0 0 60px rgba(245,197,24,1),0 0 20px rgba(245,197,24,0.8),0 6px 0 rgba(0,0,0,0.55);white-space:nowrap;z-index:20;animation:goalTextPop 2.2s cubic-bezier(0.22,1,0.36,1) forwards;animation-delay:0.32s;}
+@keyframes goalTextPop{0%{opacity:0;transform:translateX(-50%) scale(0.08) rotate(-5deg);}28%{opacity:1;transform:translateX(-50%) scale(1.18) rotate(1.5deg);}52%{transform:translateX(-50%) scale(1) rotate(0);}82%{opacity:1;}100%{opacity:0;transform:translateX(-50%) scale(1.04);}}
+.confetti-piece{position:absolute;animation:confettiFall linear forwards;}
+@keyframes confettiFall{0%{transform:translateY(0) rotate(0deg);opacity:1;}100%{transform:translateY(105vh) rotate(720deg);opacity:0;}}
+
+/* Q INDICATOR */
+.q-indicator{position:fixed;top:72px;right:14px;z-index:50;background:var(--gold);color:var(--navy);font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;padding:5px 12px;border-radius:20px;animation:pulse 1.2s ease infinite;display:none;}
+.q-indicator.visible{display:block;}
+@keyframes pulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(245,197,24,0.5);}50%{transform:scale(1.05);box-shadow:0 0 0 8px rgba(245,197,24,0);}}
+
+/* NOTIFICATIONS */
+.notification-ring{position:fixed;bottom:18px;right:18px;z-index:150;display:flex;flex-direction:column;gap:7px;align-items:flex-end;}
+.notif{background:rgba(10,22,40,0.92);border:1.5px solid var(--gold);border-radius:12px;padding:8px 15px;color:var(--white);font-size:12px;font-weight:700;animation:notifSlide 0.3s ease,notifFade 0.4s 2.6s ease forwards;max-width:220px;text-align:right;}
+@keyframes notifSlide{from{transform:translateX(55px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+@keyframes notifFade{to{opacity:0;transform:translateX(18px);}}
+
+/* LEVEL FAIL */
+#level-fail-screen{display:none;position:fixed;inset:0;z-index:450;background:linear-gradient(160deg,#1a0505,#3a0a0a);align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:24px;}
+#level-fail-screen h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(52px,12vw,96px);color:var(--red);letter-spacing:4px;margin-bottom:8px;}
+.fail-sub{font-size:18px;font-weight:900;color:rgba(255,255,255,0.7);margin-bottom:6px;}
+.fail-score{font-family:'Bebas Neue',sans-serif;font-size:68px;color:var(--white);line-height:1;margin-bottom:4px;text-shadow:0 0 28px rgba(255,255,255,0.15);}
+.retry-btn{padding:14px 40px;border-radius:12px;border:none;background:var(--red);color:#fff;font-family:'Bebas Neue',sans-serif;font-size:25px;letter-spacing:2px;cursor:pointer;box-shadow:0 6px 24px rgba(229,57,53,0.4);margin-top:12px;}
+
+/* END SCREEN */
+#end-screen{display:none;position:fixed;inset:0;z-index:400;background:linear-gradient(160deg,#0a1628,#1a3a5c);align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:24px;}
+#end-screen h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(42px,10vw,70px);color:var(--gold);letter-spacing:3px;margin-bottom:8px;}
+.final-score{font-family:'Bebas Neue',sans-serif;font-size:clamp(70px,16vw,108px);color:var(--white);line-height:1;text-shadow:0 0 40px rgba(255,255,255,0.2);}
+.play-again{margin-top:12px;padding:14px 42px;border-radius:12px;border:none;background:var(--gold);color:var(--navy);font-family:'Bebas Neue',sans-serif;font-size:25px;letter-spacing:2px;cursor:pointer;box-shadow:0 6px 24px rgba(245,197,24,0.35);}
+</style>
+</head>
+<body>
+
+<!-- SIGN-IN -->
+<div id="signin-screen">
+  <div class="signin-card">
+    <div class="signin-ball">⚽</div>
+    <div class="signin-title">Football Clicker</div>
+    <div class="signin-sub">Sign in to play</div>
+    <div class="field-group">
+      <div class="input-wrap"><label>First Name</label><input type="text" id="first-name" placeholder="Jamie" maxlength="20"></div>
+      <div class="input-wrap"><label>Last Name</label><input type="text" id="last-name" placeholder="Vardy" maxlength="20"></div>
+    </div>
+    <div class="field-group">
+      <div class="input-wrap"><label>Squad No.</label><input type="number" id="squad-num" placeholder="9" min="1" max="99"></div>
+      <div class="input-wrap"><label>Your Team</label><input type="text" id="team-input" placeholder="Enter team..." maxlength="24"></div>
+    </div>
+    <div id="signin-err" class="err-msg"></div>
+    <button class="kick-off-btn" onclick="startGame()">⚽ KICK OFF</button>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="game-screen">
+  <div class="hud">
+    <div class="player-badge">
+      <div class="squad-num" id="hud-squad">#9</div>
+      <div>
+        <div class="player-name" id="hud-name">Player</div>
+        <div class="player-team" id="hud-team">Team</div>
+      </div>
+    </div>
+    <div class="score-display">
+      <div class="score-label">Score</div>
+      <div class="score-num" id="score-display">0</div>
+    </div>
+    <div class="clicks-left">
+      <div class="clicks-num" id="clicks-display">10</div>
+      <div class="clicks-label">to Q</div>
+    </div>
+    <a href="leaderboard.html" class="hud-btn hud-btn-gold">🏆</a>
+    <button onclick="endGame()" class="hud-btn hud-btn-red">⏹</button>
+  </div>
+  <div class="level-bar">
+    <div class="level-badge level-1-badge" id="level-badge">LEVEL 1</div>
+    <div class="timer-wrap">
+      <div class="timer-num" id="timer-display">3:00</div>
+      <div class="timer-bar-bg"><div class="timer-bar-fill" id="timer-bar" style="width:100%;background:#4caf50;"></div></div>
+    </div>
+    <div class="target-badge" id="target-badge">Target: 1,000</div>
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+  </div>
+  <div class="game-field">
+    <div id="football" onclick="clickBall(event)">⚽</div>
+  </div>
+</div>
+
+<div class="q-indicator" id="q-indicator">⚡ QUESTION READY — TAP BALL</div>
+
+<!-- QUESTION OVERLAY -->
+<div id="question-overlay">
+  <div class="sky-bg"></div>
+  <div class="question-header">
+    <div class="double-badge" id="q-badge">⚽ FOOTBALL — DOUBLE YOUR SCORE!</div>
+    <h2 id="q-text">Loading...</h2>
+    <p id="q-sub"></p>
+  </div>
+  <div class="cloud-container" id="cloud-container"></div>
+  <button class="skip-btn" onclick="skipQuestion()">⚽ Keep Clicking Instead</button>
+</div>
+
+<div class="result-flash wrong-flash" id="wrong-flash"><div class="result-flash-text">❌ UNLUCKY!</div></div>
+
+<!-- GOAL SCENE -->
+<div id="goal-scene">
+  <div class="goal-crowd-flash"></div>
+  <div class="goal-text">GOAL!</div>
+  <div id="goal-ball">⚽</div>
+  <div class="goal-grass"></div>
+  <div class="goal-frame">
+    <div class="goal-crossbar"></div>
+    <div class="goal-post-left"></div>
+    <div class="goal-post-right"></div>
+    <div class="goal-net-inner">
+      <!-- Canvas net — lines physically pushed by ball impact -->
+      <canvas id="net-canvas"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="notification-ring" id="notif-ring"></div>
+
+<!-- LEVEL FAIL -->
+<div id="level-fail-screen">
+  <h1>TIME UP!</h1>
+  <div class="fail-sub" id="fail-sub">You needed 1,000 pts to pass Level 1</div>
+  <div class="fail-score" id="fail-score">0</div>
+  <div style="color:rgba(255,255,255,0.4);font-size:13px;margin-bottom:22px;">your score</div>
+  <button class="retry-btn" onclick="retryLevel()">🔁 TRY LEVEL AGAIN</button>
+</div>
+
+<!-- END SCREEN -->
+<div id="end-screen">
+  <h1>Full Time!</h1>
+  <div id="end-name" style="color:#fff;font-size:17px;font-weight:900;margin-bottom:6px;"></div>
+  <div class="final-score" id="end-score">0</div>
+  <div style="color:rgba(255,255,255,0.5);font-size:12px;margin-top:5px;margin-bottom:22px;">points scored</div>
+  <button id="submit-btn" onclick="submitScore()" style="display:block;width:100%;max-width:300px;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#f5c518,#c9a000);color:#0a1628;font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;cursor:pointer;box-shadow:0 6px 24px rgba(245,197,24,0.35);margin-bottom:10px;">🏆 SAVE TO LEADERBOARD</button>
+  <a href="leaderboard.html" style="display:block;text-align:center;padding:11px 28px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.6);font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:1px;text-decoration:none;margin-bottom:10px;max-width:300px;width:100%;">📊 VIEW LEAGUE TABLE</a>
+  <button class="play-again" onclick="resetGame()">▶ PLAY AGAIN</button>
+</div>
+
+<script>
+// ═══════════════════════════════
+// QUESTION BANK  (Football + CS)
+// tier 1-2 = Level 1  |  tier 2-3 = Level 2  |  tier 3-5 = Level 3
+// ═══════════════════════════════
+const QUESTIONS = [
+// ── FOOTBALL tier 1 ──
+{s:'f',t:1,q:"Which team plays at Old Trafford?",a:["Manchester United","Manchester City","Liverpool","Arsenal"],c:0},
+{s:'f',t:1,q:"What colour is Chelsea's home kit?",a:["Blue","Red","White","Yellow"],c:0},
+{s:'f',t:1,q:"How many players are on the pitch per team?",a:["11","9","10","12"],c:0},
+{s:'f',t:1,q:"Which team plays at Anfield?",a:["Liverpool","Everton","Chelsea","Arsenal"],c:0},
+{s:'f',t:1,q:"What colour card means a player is sent off?",a:["Red","Blue","Yellow","Green"],c:0},
+{s:'f',t:1,q:"Which team is known as The Gunners?",a:["Arsenal","Chelsea","Tottenham","West Ham"],c:0},
+{s:'f',t:1,q:"How long is a standard football match?",a:["90 minutes","60 minutes","80 minutes","45 minutes"],c:0},
+{s:'f',t:1,q:"Which team plays at the Etihad Stadium?",a:["Manchester City","Man United","Burnley","Leeds"],c:0},
+{s:'f',t:1,q:"What colour is Manchester United's home kit?",a:["Red","Blue","White","Green"],c:0},
+{s:'f',t:1,q:"Liverpool's home kit is which colour?",a:["Red","Blue","Yellow","White"],c:0},
+{s:'f',t:1,q:"Which team is known as The Spurs?",a:["Tottenham Hotspur","Chelsea","Arsenal","West Ham"],c:0},
+{s:'f',t:1,q:"Which team plays at the Emirates Stadium?",a:["Arsenal","Tottenham","Chelsea","West Ham"],c:0},
+{s:'f',t:1,q:"How many halves in a football match?",a:["2","3","4","1"],c:0},
+{s:'f',t:1,q:"What does the goalkeeper do that outfield players can't?",a:["Handle the ball in the box","Score goals","Take corners","Play in midfield"],c:0},
+{s:'f',t:1,q:"Which country invented football?",a:["England","Brazil","Spain","Germany"],c:0},
+{s:'f',t:1,q:"Which team plays at Stamford Bridge?",a:["Chelsea","Arsenal","Tottenham","Fulham"],c:0},
+{s:'f',t:1,q:"What colour is Arsenal's home kit?",a:["Red and white","Blue","Yellow","Green"],c:0},
+{s:'f',t:1,q:"A yellow card is also known as what?",a:["A booking","A warning","A caution","A ban"],c:0},
+
+// ── FOOTBALL tier 2 ──
+{s:'f',t:2,q:"Which country does Kylian Mbappé play for?",a:["France","Brazil","Spain","Belgium"],c:0},
+{s:'f',t:2,q:"Which club does Erling Haaland play for?",a:["Manchester City","Arsenal","Real Madrid","Bayern Munich"],c:0},
+{s:'f',t:2,q:"What does VAR stand for?",a:["Video Assistant Referee","Very Accurate Review","Visible Action Review","Video Action Ruling"],c:0},
+{s:'f',t:2,q:"Which country won the 2022 FIFA World Cup?",a:["Argentina","France","Brazil","Germany"],c:0},
+{s:'f',t:2,q:"Bukayo Saka plays for which Premier League club?",a:["Arsenal","Liverpool","Chelsea","Man City"],c:0},
+{s:'f',t:2,q:"Marcus Rashford plays for which club?",a:["Manchester United","Man City","Chelsea","Arsenal"],c:0},
+{s:'f',t:2,q:"Which Premier League team plays at St James' Park?",a:["Newcastle United","Sunderland","Middlesbrough","Leeds"],c:0},
+{s:'f',t:2,q:"How many substitutes can a PL team use per match?",a:["5","3","4","6"],c:0},
+{s:'f',t:2,q:"What trophy is won by the best team in Europe?",a:["Champions League","World Cup","FA Cup","Europa League"],c:0},
+{s:'f',t:2,q:"Which nation is Jude Bellingham from?",a:["England","Germany","Spain","France"],c:0},
+{s:'f',t:2,q:"What does a penalty shootout decide?",a:["A draw after extra time","A 0-0 at 90 mins","A draw at half time","Any draw"],c:0},
+{s:'f',t:2,q:"Which team plays at Tottenham Hotspur Stadium?",a:["Tottenham","Arsenal","Chelsea","QPR"],c:0},
+{s:'f',t:2,q:"Phil Foden plays for which club?",a:["Manchester City","Man United","Liverpool","Arsenal"],c:0},
+{s:'f',t:2,q:"Which country is Vinicius Jr from?",a:["Brazil","Portugal","Spain","Argentina"],c:0},
+{s:'f',t:2,q:"Cole Palmer plays for which club?",a:["Chelsea","Arsenal","Man City","Liverpool"],c:0},
+{s:'f',t:2,q:"What nationality is Erling Haaland?",a:["Norwegian","Danish","Swedish","German"],c:0},
+{s:'f',t:2,q:"Declan Rice plays for which club?",a:["Arsenal","West Ham","Chelsea","Man United"],c:0},
+{s:'f',t:2,q:"Which country does Son Heung-min play for?",a:["South Korea","Japan","China","North Korea"],c:0},
+
+// ── FOOTBALL tier 3 ──
+{s:'f',t:3,q:"Which club is Jude Bellingham associated with before Real Madrid?",a:["Birmingham City","Chelsea","Arsenal","Liverpool"],c:0},
+{s:'f',t:3,q:"How many times has England won the World Cup?",a:["1","2","0","3"],c:0},
+{s:'f',t:3,q:"Which team has won the most Premier League titles?",a:["Manchester United","Man City","Arsenal","Liverpool"],c:0},
+{s:'f',t:3,q:"Which club has won the most Champions League titles?",a:["Real Madrid","Barcelona","Bayern Munich","Liverpool"],c:0},
+{s:'f',t:3,q:"How many panels does a traditional football have?",a:["32","24","20","36"],c:0},
+{s:'f',t:3,q:"A penalty kick is taken from how many yards?",a:["12 yards","6 yards","18 yards","10 yards"],c:0},
+{s:'f',t:3,q:"In what year was the Premier League founded?",a:["1992","1985","1888","2000"],c:0},
+{s:'f',t:3,q:"Who is the all-time top scorer in the Premier League?",a:["Alan Shearer","Wayne Rooney","Andrew Cole","Frank Lampard"],c:0},
+{s:'f',t:3,q:"In which year did Leicester City win the Premier League?",a:["2016","2014","2018","2012"],c:0},
+{s:'f',t:3,q:"Which country has won the most FIFA World Cups?",a:["Brazil","Germany","Italy","Argentina"],c:0},
+{s:'f',t:3,q:"Who scored the 'Hand of God' goal in 1986?",a:["Maradona","Pelé","Zidane","Ronaldo"],c:0},
+{s:'f',t:3,q:"Which stadium has the largest capacity in England?",a:["Wembley","Old Trafford","Anfield","Etihad"],c:0},
+{s:'f',t:3,q:"Which country won the first FIFA World Cup in 1930?",a:["Uruguay","Brazil","Argentina","England"],c:0},
+{s:'f',t:3,q:"What is the offside rule in football?",a:["Ahead of last defender when ball played","Behind the ball","Outside the pitch","Pushing a player"],c:0},
+{s:'f',t:3,q:"Which team won the 2023 Champions League?",a:["Manchester City","Real Madrid","Inter Milan","AC Milan"],c:0},
+
+// ── FOOTBALL tier 4 ──
+{s:'f',t:4,q:"Which goalkeeper has the most Premier League clean sheets?",a:["Petr Čech","David James","David Seaman","Mark Schwarzer"],c:0},
+{s:'f',t:4,q:"What is the circumference of a size 5 football?",a:["68–70 cm","60–62 cm","75–78 cm","55–58 cm"],c:0},
+{s:'f',t:4,q:"What year did the back-pass rule change?",a:["1992","1988","1995","2000"],c:0},
+{s:'f',t:4,q:"Which team has won the most FA Cup titles?",a:["Arsenal","Manchester United","Chelsea","Liverpool"],c:0},
+{s:'f',t:4,q:"Wembley Stadium reopened in which year?",a:["2007","2003","2010","2005"],c:0},
+{s:'f',t:4,q:"Who scored the most goals in a single PL season?",a:["Erling Haaland","Alan Shearer","Andrew Cole","Luis Suárez"],c:0},
+
+// ── FOOTBALL tier 5 ──
+{s:'f',t:5,q:"Which club did Ronaldo leave to join Man United first?",a:["Sporting CP","Benfica","Porto","Académica"],c:0},
+{s:'f',t:5,q:"How many times has Brazil won the FIFA World Cup?",a:["5","4","6","3"],c:0},
+{s:'f',t:5,q:"Which player won the Ballon d'Or the most times?",a:["Lionel Messi","Cristiano Ronaldo","Ronaldo Nazário","Zidane"],c:0},
+{s:'f',t:5,q:"In which city is the Bernabéu stadium?",a:["Madrid","Barcelona","Seville","Valencia"],c:0},
+{s:'f',t:5,q:"What was the score in the 1966 World Cup final?",a:["4–2","3–1","2–1","3–2"],c:0},
+
+// ── CS tier 1 ──
+{s:'c',t:1,q:"What does CPU stand for?",a:["Central Processing Unit","Computer Power Unit","Control Process Unit","Core Processing Unit"],c:0},
+{s:'c',t:1,q:"How many bits are in one byte?",a:["8","4","16","2"],c:0},
+{s:'c',t:1,q:"Which of these is an input device?",a:["Keyboard","Monitor","Speaker","Printer"],c:0},
+{s:'c',t:1,q:"What does 'www' stand for in a web address?",a:["World Wide Web","World Wide Wire","Wide Web World","Web Wide World"],c:0},
+{s:'c',t:1,q:"Which of these stores information permanently?",a:["Hard Drive","RAM","CPU","Monitor"],c:0},
+{s:'c',t:1,q:"Is a monitor an input or output device?",a:["Output","Input","Both","Neither"],c:0},
+{s:'c',t:1,q:"What does RAM stand for?",a:["Random Access Memory","Read And Move","Rapid Access Mode","Read All Memory"],c:0},
+{s:'c',t:1,q:"What does a mouse do?",a:["Controls a cursor on screen","Stores files","Displays images","Connects to the internet"],c:0},
+{s:'c',t:1,q:"What is software?",a:["Programs that run on a computer","Physical parts of a computer","A type of cable","A storage device"],c:0},
+{s:'c',t:1,q:"What is hardware?",a:["Physical parts of a computer","Programs on a computer","A type of file","The internet"],c:0},
+{s:'c',t:1,q:"Which of these is an output device?",a:["Printer","Keyboard","Microphone","Scanner"],c:0},
+{s:'c',t:1,q:"What does 'copy and paste' do?",a:["Duplicates content to another place","Deletes content","Saves a file","Opens a program"],c:0},
+{s:'c',t:1,q:"What is a file?",a:["A stored collection of data","A type of computer","A network connection","A security system"],c:0},
+{s:'c',t:1,q:"What allows computers to communicate globally?",a:["The Internet","RAM","The CPU","A Hard Drive"],c:0},
+{s:'c',t:1,q:"Which device lets you hear sound from a computer?",a:["Speakers","Monitor","Keyboard","Mouse"],c:0},
+{s:'c',t:1,q:"What does double-clicking on a file do?",a:["Opens it","Copies it","Deletes it","Renames it"],c:0},
+{s:'c',t:1,q:"What does an emoji represent?",a:["An emotion or idea using a picture","A type of virus","A file format","A coding language"],c:0},
+{s:'c',t:1,q:"What is a web browser used for?",a:["Accessing websites","Storing files","Playing music","Writing code"],c:0},
+
+// ── CS tier 2 ──
+{s:'c',t:2,q:"Which number system uses only 0s and 1s?",a:["Binary","Decimal","Hexadecimal","Octal"],c:0},
+{s:'c',t:2,q:"What does HTML stand for?",a:["HyperText Markup Language","High Text Making Language","Hyper Transfer Mode Language","HyperText Making Links"],c:0},
+{s:'c',t:2,q:"What is an algorithm?",a:["Step-by-step instructions to solve a problem","A type of virus","A programming language","A piece of hardware"],c:0},
+{s:'c',t:2,q:"What is the purpose of a loop in programming?",a:["Repeat instructions multiple times","Store data","Display output","Connect to the internet"],c:0},
+{s:'c',t:2,q:"What does a firewall do?",a:["Protects a network from threats","Speeds up the computer","Stores passwords","Displays web pages"],c:0},
+{s:'c',t:2,q:"What type of software is Microsoft Word?",a:["Application software","Operating system","Utility software","Programming language"],c:0},
+{s:'c',t:2,q:"What is the decimal value of binary 1010?",a:["10","8","12","6"],c:0},
+{s:'c',t:2,q:"Which of these is an example of an operating system?",a:["Windows","Microsoft Word","Google Chrome","Minecraft"],c:0},
+{s:'c',t:2,q:"What does a variable do in programming?",a:["Stores a value","Runs a loop","Displays output","Connects to a network"],c:0},
+{s:'c',t:2,q:"What is a strong password?",a:["Mix of letters, numbers & symbols","Your name","123456","Your birthday"],c:0},
+{s:'c',t:2,q:"What does the = symbol do in Python?",a:["Assigns a value to a variable","Checks if equal","Adds two numbers","Prints to screen"],c:0},
+{s:'c',t:2,q:"In Python, what does print('Hello') do?",a:["Displays Hello on screen","Saves Hello to a file","Stores Hello in a variable","Causes an error"],c:0},
+{s:'c',t:2,q:"What does a selection (if/else) do?",a:["Makes a decision based on a condition","Repeats code","Stores data","Connects to the internet"],c:0},
+{s:'c',t:2,q:"What type of attack tricks you into revealing your password?",a:["Phishing","Hacking","Malware","Spyware"],c:0},
+{s:'c',t:2,q:"What is the internet?",a:["A global network of connected computers","A type of software","A storage device","A programming language"],c:0},
+{s:'c',t:2,q:"How do you convert binary 101 to decimal?",a:["5","3","4","6"],c:0},
+{s:'c',t:2,q:"What does an IF statement do?",a:["Runs code only if a condition is true","Repeats code","Stores a value","Connects to the web"],c:0},
+{s:'c',t:2,q:"Which of these is a social media platform?",a:["Instagram","Windows","Python","Google Docs"],c:0},
+
+// ── CS tier 3 ──
+{s:'c',t:3,q:"What does 'if x > 5: print(x)' do in Python?",a:["Prints x only if x > 5","Always prints x","Prints 5","Causes an error"],c:0},
+{s:'c',t:3,q:"What is the decimal value of binary 11001?",a:["25","24","26","23"],c:0},
+{s:'c',t:3,q:"What does a FOR loop do?",a:["Repeats a set number of times","Repeats while a condition is true","Runs once","Checks a condition"],c:0},
+{s:'c',t:3,q:"Which data type stores whole numbers in Python?",a:["Integer","String","Float","Boolean"],c:0},
+{s:'c',t:3,q:"What is the output of: 10 % 3 in Python?",a:["1","3","0","Error"],c:0},
+{s:'c',t:3,q:"What does len('Hello') return in Python?",a:["5","4","6","Error"],c:0},
+{s:'c',t:3,q:"What is a function in programming?",a:["A reusable block of named code","A type of variable","A loop","A condition"],c:0},
+{s:'c',t:3,q:"What does AND mean in a Boolean expression?",a:["Both conditions must be true","Either condition can be true","The condition is false","Negates the condition"],c:0},
+{s:'c',t:3,q:"What does a WHILE loop do?",a:["Repeats while a condition is true","Repeats a fixed number of times","Runs once","Checks two conditions"],c:0},
+{s:'c',t:3,q:"What is two-factor authentication?",a:["Using two methods to verify identity","Having two passwords","Logging in twice","Using two devices"],c:0},
+{s:'c',t:3,q:"Which of these is an example of malware?",a:["Virus","Firewall","Antivirus","Browser"],c:0},
+{s:'c',t:3,q:"What does NOT mean in Boolean logic?",a:["Reverses a condition","Checks both conditions","Checks either condition","Makes both true"],c:0},
+{s:'c',t:3,q:"What is the binary value of decimal 13?",a:["1101","1011","1110","1001"],c:0},
+{s:'c',t:3,q:"What does a network allow computers to do?",a:["Share resources and communicate","Run faster","Store more data","Display better graphics"],c:0},
+{s:'c',t:3,q:"What is the purpose of indentation in Python?",a:["Shows which code belongs to a block","Makes code look nice","Speeds up the code","Required for all lines"],c:0},
+{s:'c',t:3,q:"What does a Boolean data type store?",a:["True or False","Numbers","Text","Lists"],c:0},
+{s:'c',t:3,q:"What is the output of: print(2 + 3 * 4)?",a:["14","20","24","10"],c:0},
+{s:'c',t:3,q:"Which data type stores text in Python?",a:["String","Integer","Float","Boolean"],c:0},
+
+// ── CS tier 4 ──
+{s:'c',t:4,q:"What is the hexadecimal value of decimal 255?",a:["FF","FE","EF","F0"],c:0},
+{s:'c',t:4,q:"Which data structure uses LIFO order?",a:["Stack","Queue","Array","Graph"],c:0},
+{s:'c',t:4,q:"What does SQL stand for?",a:["Structured Query Language","Simple Query Language","Standard Question Logic","System Query Language"],c:0},
+{s:'c',t:4,q:"What is a primary key in a database?",a:["Unique identifier for each record","The first field","A password","The most important query"],c:0},
+{s:'c',t:4,q:"In Python, what does len([1,2,3,4]) return?",a:["4","3","5","Error"],c:0},
+{s:'c',t:4,q:"Which sorting algorithm repeatedly swaps adjacent elements?",a:["Bubble Sort","Merge Sort","Binary Search","Quick Sort"],c:0},
+{s:'c',t:4,q:"What is the difference between RAM and ROM?",a:["RAM is volatile; ROM is not","ROM is faster","RAM is read-only","They are the same"],c:0},
+{s:'c',t:4,q:"What does a compiler do?",a:["Translates all code before running","Translates code line by line","Stores data","Manages memory"],c:0},
+{s:'c',t:4,q:"What is an array?",a:["A collection of items stored under one name","A single variable","A loop","A function"],c:0},
+{s:'c',t:4,q:"What does 5 // 2 return in Python?",a:["2","2.5","3","Error"],c:0},
+
+// ── CS tier 5 ──
+{s:'c',t:5,q:"What does ASCII stand for?",a:["American Standard Code for Information Interchange","Automatic Standard Character Input Interface","Advanced System Code for Info Index","American Standard Computer Instruction Interface"],c:0},
+{s:'c',t:5,q:"What is the purpose of a hash function?",a:["Convert data to a fixed-size value","Encrypt messages","Sort an array","Compress a file"],c:0},
+{s:'c',t:5,q:"What is the worst-case time complexity of Bubble Sort?",a:["O(n²)","O(n)","O(log n)","O(n log n)"],c:0},
+{s:'c',t:5,q:"What is a recursive function?",a:["A function that calls itself","A function that loops","A function with no return","A function with many parameters"],c:0},
+{s:'c',t:5,q:"In binary, what is 1111 1111 in decimal?",a:["255","256","128","127"],c:0},
+{s:'c',t:5,q:"What does a logic gate AND output when both inputs are 1?",a:["1","0","Either","Depends"],c:0},
+{s:'c',t:5,q:"What is the difference between symmetric and asymmetric encryption?",a:["Symmetric uses one key; asymmetric uses two","Asymmetric is faster","Symmetric is more secure","They are the same"],c:0},
+{s:'c',t:5,q:"Which layer of the TCP/IP model handles IP addressing?",a:["Internet layer","Transport layer","Application layer","Link layer"],c:0},
+];
+
+// ═══════════════════════════════
+// LEVEL CONFIG
+// ═══════════════════════════════
+const LEVELS = [
+  {num:1, target:1000,  secs:180, tMin:1, tMax:2, label:'LEVEL 1', cls:'level-1-badge', barCol:'#4caf50'},
+  {num:2, target:5000,  secs:180, tMin:2, tMax:3, label:'LEVEL 2', cls:'level-2-badge', barCol:'var(--gold)'},
+  {num:3, target:15000, secs:180, tMin:3, tMax:5, label:'LEVEL 3', cls:'level-3-badge', barCol:'var(--red)'},
+];
+
+// ═══════════════════════════════
+// STATE
+// ═══════════════════════════════
+let player={}, score=0, clicks=0, totalClicks=0;
+let questionPending=false, currentQuestion=null;
+let askedQuestions=new Set(), questionAnswered=false;
+let gameRunning=false, questionCount=0;
+let currentLevel=0, timerSecsLeft=180, timerInterval=null;
+
+// ═══════════════════════════════
+// GOAL FANFARE — Web Audio
+// ═══════════════════════════════
+function playCrowdCheer(){
+  try{
+    const ctx = new(window.AudioContext||window.webkitAudioContext)();
+
+    // Classic football fanfare: da-da-da-DAAA da-da-da-DAAA
+    // Notes: C4=262 E4=330 G4=392 C5=523 A4=440
+    const BPM = 220;
+    const B = 60/BPM;  // one beat in seconds
+    // [frequency, startBeat, durationBeats]
+    const notes = [
+      // First phrase — rising fanfare
+      [330, 0.0,  0.5],
+      [392, 0.5,  0.5],
+      [523, 1.0,  1.0],
+      [440, 2.0,  0.5],
+      [392, 2.5,  0.5],
+      [523, 3.0,  1.5],
+      // Second phrase — answer
+      [392, 4.8,  0.5],
+      [440, 5.3,  0.5],
+      [523, 5.8,  0.5],
+      [587, 6.3,  0.5],
+      [659, 6.8,  1.8],
+    ];
+
+    const master = ctx.createGain();
+    master.gain.setValueAtTime(0.0, ctx.currentTime);
+    master.gain.linearRampToValueAtTime(0.55, ctx.currentTime+0.02);
+    master.connect(ctx.destination);
+
+    notes.forEach(([freq, startB, durB])=>{
+      const t0 = ctx.currentTime + startB * B;
+      const t1 = t0 + durB * B;
+
+      // Main tone — triangle wave (warm, not buzzy)
+      const osc = ctx.createOscillator();
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      const og = ctx.createGain();
+      og.gain.setValueAtTime(0, t0);
+      og.gain.linearRampToValueAtTime(0.6, t0+0.01);
+      og.gain.setValueAtTime(0.6, t1-0.04);
+      og.gain.linearRampToValueAtTime(0, t1);
+      osc.connect(og); og.connect(master);
+      osc.start(t0); osc.stop(t1+0.05);
+
+      // Octave below — adds depth
+      const osc2 = ctx.createOscillator();
+      osc2.type = 'sine';
+      osc2.frequency.value = freq / 2;
+      const og2 = ctx.createGain();
+      og2.gain.setValueAtTime(0, t0);
+      og2.gain.linearRampToValueAtTime(0.25, t0+0.01);
+      og2.gain.setValueAtTime(0.25, t1-0.04);
+      og2.gain.linearRampToValueAtTime(0, t1);
+      osc2.connect(og2); og2.connect(master);
+      osc2.start(t0); osc2.stop(t1+0.05);
+    });
+
+    // Fade out master at end
+    const totalBeats = 8.6;
+    master.gain.setValueAtTime(0.55, ctx.currentTime + totalBeats*B - 0.3);
+    master.gain.linearRampToValueAtTime(0, ctx.currentTime + totalBeats*B + 0.1);
+
+  }catch(e){}
+}
+
+// ═══════════════════════════════
+// SIGN-IN
+// ═══════════════════════════════
+function startGame(){
+  const fn=document.getElementById('first-name').value.trim();
+  const ln=document.getElementById('last-name').value.trim();
+  const sq=document.getElementById('squad-num').value.trim();
+  const tm=document.getElementById('team-input').value.trim();
+  const err=document.getElementById('signin-err');
+  if(!fn||!ln){err.textContent='Enter your first and last name';return;}
+  if(!sq||sq<1||sq>99){err.textContent='Enter a valid squad number (1–99)';return;}
+  if(!tm){err.textContent='Enter your team name';return;}
+  err.textContent='';
+  player={firstName:fn,lastName:ln,squad:sq,team:tm};
+  document.getElementById('signin-screen').style.display='none';
+  beginLevel(0);
+}
+
+// ═══════════════════════════════
+// LEVEL MANAGEMENT
+// ═══════════════════════════════
+function beginLevel(idx){
+  currentLevel=idx;
+  score=0; clicks=0; totalClicks=0;
+  questionPending=false; questionAnswered=false;
+  questionCount=0; askedQuestions.clear();
+  gameRunning=true;
+
+  const lv=LEVELS[idx];
+  timerSecsLeft=lv.secs;
+
+  document.getElementById('hud-name').textContent=`${player.firstName} ${player.lastName}`;
+  document.getElementById('hud-squad').textContent=`#${player.squad}`;
+  document.getElementById('hud-team').textContent=player.team.toUpperCase();
+
+  const badge=document.getElementById('level-badge');
+  badge.textContent=lv.label;
+  badge.className=`level-badge ${lv.cls}`;
+  document.getElementById('target-badge').textContent=`Target: ${lv.target.toLocaleString()}`;
+
+  updateHUD(); updateTimerDisplay();
+
+  document.getElementById('level-fail-screen').style.display='none';
+  document.getElementById('end-screen').style.display='none';
+  document.getElementById('q-indicator').classList.remove('visible');
+  document.getElementById('game-screen').style.display='flex';
+
+  clearInterval(timerInterval);
+  timerInterval=setInterval(tickTimer,1000);
+
+  showNotif(`⚽ ${lv.label} — reach ${lv.target.toLocaleString()} pts in 3 mins!`);
+}
+
+function tickTimer(){
+  if(!gameRunning)return;
+  timerSecsLeft--;
+  updateTimerDisplay();
+  if(timerSecsLeft<=0){clearInterval(timerInterval);checkLevelEnd(true);}
+}
+
+function updateTimerDisplay(){
+  const lv=LEVELS[currentLevel];
+  const m=Math.floor(timerSecsLeft/60), s=timerSecsLeft%60;
+  const el=document.getElementById('timer-display');
+  el.textContent=`${m}:${s.toString().padStart(2,'0')}`;
+  el.className='timer-num'+(timerSecsLeft<=10?' danger':timerSecsLeft<=30?' warning':'');
+  const pct=Math.max(0,timerSecsLeft/lv.secs*100);
+  const bar=document.getElementById('timer-bar');
+  bar.style.width=pct+'%';
+  bar.style.background=timerSecsLeft<=10?'var(--red)':timerSecsLeft<=30?'#ff9800':lv.barCol;
+}
+
+function checkLevelEnd(timedOut){
+  const lv=LEVELS[currentLevel];
+  if(score>=lv.target){
+    clearInterval(timerInterval);
+    gameRunning=false;
+    if(currentLevel<LEVELS.length-1){
+      showNotif(`🎉 ${lv.label} passed! Score: ${score.toLocaleString()}`);
+      setTimeout(()=>beginLevel(currentLevel+1),1800);
+    } else {
+      endGame();
+    }
+  } else if(timedOut){
+    gameRunning=false;
+    document.getElementById('fail-sub').textContent=
+      `You needed ${lv.target.toLocaleString()} pts to pass ${lv.label}`;
+    document.getElementById('fail-score').textContent=score.toLocaleString();
+    document.getElementById('level-fail-screen').style.display='flex';
+  }
+}
+
+function retryLevel(){ beginLevel(currentLevel); }
+
+// ═══════════════════════════════
+// CLICK BALL
+// ═══════════════════════════════
+function clickBall(event){
+  if(!gameRunning)return;
+  if(questionPending){openQuestion();return;}
+
+  const ball=document.getElementById('football');
+  ball.classList.remove('kick','glow');
+  void ball.offsetWidth;
+  ball.classList.add('kick','glow');
+  setTimeout(()=>ball.classList.remove('glow'),360);
+
+  score++; clicks++; totalClicks++;
+  updateHUD(); spawnFloat(event);
+
+  if(clicks>=10){
+    clicks=0; questionPending=true;
+    document.getElementById('q-indicator').classList.add('visible');
+    showNotif('🎯 Question ready! Tap ball or keep clicking');
+  }
+  checkLevelEnd(false);
+}
+
+function spawnFloat(event){
+  const el=document.createElement('div');
+  el.className='float-score'; el.textContent='+1';
+  const rect=document.getElementById('football').getBoundingClientRect();
+  el.style.left=(rect.left+rect.width/2-14+(Math.random()*34-17))+'px';
+  el.style.top=(rect.top-6+(Math.random()*14-7))+'px';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),880);
+}
+
+function updateHUD(){
+  const sd=document.getElementById('score-display');
+  sd.textContent=score.toLocaleString();
+  sd.classList.remove('pop'); void sd.offsetWidth; sd.classList.add('pop');
+  setTimeout(()=>sd.classList.remove('pop'),160);
+  document.getElementById('clicks-display').textContent=questionPending?'★':(10-clicks);
+  const lv=LEVELS[currentLevel];
+  document.getElementById('progress-bar').style.width=Math.min(score/lv.target*100,100)+'%';
+}
+
+// ═══════════════════════════════
+// QUESTIONS
+// ═══════════════════════════════
+function getQuestion(){
+  const lv=LEVELS[currentLevel];
+  const wantS=(questionCount%2===0)?'f':'c';
+  let pool=QUESTIONS.filter(q=>q.s===wantS&&q.t>=lv.tMin&&q.t<=lv.tMax&&!askedQuestions.has(q.q));
+  if(pool.length===0){
+    QUESTIONS.filter(q=>q.s===wantS).forEach(q=>askedQuestions.delete(q.q));
+    pool=QUESTIONS.filter(q=>q.s===wantS&&q.t>=lv.tMin&&q.t<=lv.tMax);
+  }
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+
+function openQuestion(){
+  if(!questionPending)return;
+  questionPending=false; questionAnswered=false;
+  document.getElementById('q-indicator').classList.remove('visible');
+
+  currentQuestion=getQuestion();
+  if(!currentQuestion)return;
+  askedQuestions.add(currentQuestion.q);
+
+  document.getElementById('q-text').textContent=currentQuestion.q;
+
+  const tierLabels=['','Easy','Easy','Medium','Hard','Expert'];
+  const isCS=currentQuestion.s==='c';
+  const badge=document.getElementById('q-badge');
+  badge.textContent=isCS?'💻 CS QUESTION — DOUBLE YOUR SCORE!':'⚽ FOOTBALL — DOUBLE YOUR SCORE!';
+  badge.style.background=isCS?'#3b82f6':'';
+  badge.style.color=isCS?'white':'';
+
+  document.getElementById('q-sub').textContent=
+    `${isCS?'💻 CS':'⚽ Football'} • ${tierLabels[currentQuestion.t]} • Score: ${score.toLocaleString()} pts`;
+
+  const shuffled=currentQuestion.a.map((a,i)=>({text:a,idx:i}));
+  for(let i=shuffled.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];
+  }
+
+  const container=document.getElementById('cloud-container');
+  container.innerHTML='';
+  shuffled.forEach(ans=>{
+    const div=document.createElement('div');
+    div.className='cloud-answer';
+    div.innerHTML=`<div class="cloud-wrap"><div class="cloud-bumps"><div class="cloud-bump cloud-bump-1"></div><div class="cloud-bump cloud-bump-2"></div><div class="cloud-bump cloud-bump-3"></div></div><div class="cloud-body">${ans.text}</div></div>`;
+    div.onclick=()=>answerQuestion(ans.idx===currentQuestion.c,div,container);
+    container.appendChild(div);
+  });
+
+  questionCount++;
+  document.getElementById('question-overlay').classList.add('active');
+  container.style.pointerEvents='none';
+  setTimeout(()=>{container.style.pointerEvents='';},600);
+}
+
+function answerQuestion(isCorrect,clickedEl,container){
+  if(questionAnswered)return;
+  questionAnswered=true;
+  container.querySelectorAll('.cloud-answer').forEach(c=>{c.onclick=null;});
+
+  if(isCorrect){
+    clickedEl.classList.add('correct');
+    const old=score; score=score*2;
+    updateHUD(); triggerGoal();
+    setTimeout(()=>{
+      closeQuestion();
+      showNotif(`⚽ GOAL! ${old.toLocaleString()} → ${score.toLocaleString()}`);
+      checkLevelEnd(false);
+    },2500);
+  } else {
+    clickedEl.classList.add('wrong');
+    container.querySelectorAll('.cloud-answer').forEach(c=>{
+      if(c.querySelector('.cloud-body').textContent.trim()===currentQuestion.a[currentQuestion.c])
+        c.classList.add('show-correct');
+    });
+    showFlash('wrong');
+    setTimeout(()=>{
+      closeQuestion();
+      showNotif(`❌ Unlucky! Answer: ${currentQuestion.a[currentQuestion.c]}`);
+    },1600);
+  }
+}
+
+function skipQuestion(){closeQuestion();showNotif('⚽ Keep clicking!');}
+function closeQuestion(){document.getElementById('question-overlay').classList.remove('active');}
+function showFlash(type){
+  const el=document.getElementById(type+'-flash');
+  if(!el)return;
+  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+}
+
+// ═══════════════════════════════
+// GOAL CELEBRATION
+// ═══════════════════════════════
+function triggerGoal(){
+  playCrowdCheer();
+  const scene = document.getElementById('goal-scene');
+  const ball  = document.getElementById('goal-ball');
+  const frame = scene.querySelector('.goal-frame');
+
+  // Reset
+  scene.classList.remove('active');
+  scene.querySelectorAll('.confetti-piece').forEach(e=>e.remove());
+  if(netAnimId) cancelAnimationFrame(netAnimId);
+  ball.style.cssText='';
+  void scene.offsetWidth;
+
+  // Activate + measure
+  scene.classList.add('active');
+  void scene.offsetWidth;
+  const fr = frame.getBoundingClientRect();
+  const tx = fr.left + fr.width  * 0.5;
+  const ty = fr.top  + fr.height * 0.28;
+  const sx = window.innerWidth  * 0.5;
+  const sy = -65;
+
+  // Draw resting net straight away
+  animateBulge();  // draws static net
+
+  // Place ball at start
+  ball.style.cssText=`position:absolute;font-size:clamp(42px,9vw,68px);left:${sx}px;top:${sy}px;transform:translate(-50%,0) scale(0.16) rotate(0deg);filter:drop-shadow(0 8px 24px rgba(0,0,0,0.7));z-index:10;pointer-events:none;`;
+  void ball.offsetWidth;
+
+  const flyMs = 560;
+  ball.animate([
+    {left:sx+'px', top:sy+'px',             transform:'translate(-50%,0) scale(0.16) rotate(0deg)',   opacity:'1'},
+    {left:(sx+(tx-sx)*0.55)+'px', top:(sy+(ty-sy)*0.52)+'px', transform:'translate(-50%,0) scale(0.82) rotate(320deg)', opacity:'1', offset:0.56},
+    {left:tx+'px', top:ty+'px',             transform:'translate(-50%,0) scale(1.1)  rotate(555deg)', opacity:'1'},
+  ],{duration:flyMs, easing:'cubic-bezier(0.25,0.46,0.45,0.94)', fill:'forwards'});
+
+  // Trigger net bulge when ball arrives
+  setTimeout(()=>{ animateBulge(); }, flyMs - 40);
+
+  // Confetti
+  const cols=['#f5c518','#4caf50','#2196f3','#e53935','#fff','#ff9800','#e91e63'];
+  for(let i=0;i<80;i++){
+    const c=document.createElement('div');
+    c.className='confetti-piece';
+    const sz=7+Math.random()*9;
+    c.style.cssText=`left:${6+Math.random()*88}%;top:${-sz}px;width:${sz}px;height:${sz}px;background:${cols[i%cols.length]};border-radius:${Math.random()>.45?'50%':'2px'};animation-duration:${1.4+Math.random()*1.3}s;animation-delay:${0.2+Math.random()*0.55}s;`;
+    scene.appendChild(c);
+  }
+
+  setTimeout(()=>{
+    scene.classList.remove('active');
+    ball.style.cssText='';
+    if(netAnimId){ cancelAnimationFrame(netAnimId); netAnimId=null; }
+  }, 2500);
+}
+
+// ═══════════════════════════════
+// CANVAS NET — physically deforms grid lines
+// ═══════════════════════════════
+let netAnimId = null;
+
+function animateBulge(){
+  const canvas = document.getElementById('net-canvas');
+  const inner  = canvas.parentElement;
+  // Size canvas to fill the net-inner div
+  canvas.width  = inner.offsetWidth  || 300;
+  canvas.height = inner.offsetHeight || 140;
+  const W = canvas.width, H = canvas.height;
+  const ctx = canvas.getContext('2d');
+
+  const cols = Math.ceil(W / 22) + 1;
+  const rows = Math.ceil(H / 22) + 1;
+  const cw = W / (cols-1);   // cell width
+  const ch = H / (rows-1);   // cell height
+
+  // Impact centre (upper-centre of net)
+  const cx = W * 0.5;
+  const cy = H * 0.3;
+
+  // Bulge state: radius grows then springs back
+  let bulgeR  = 0;
+  let velocity = 180;   // px/s — rapid initial expansion
+  const maxR   = Math.min(W, H) * 0.55;
+  let phase    = 'expand';  // expand → spring → settle → retreat
+  let settled  = 0;
+  const startT = performance.now();
+
+  if(netAnimId) cancelAnimationFrame(netAnimId);
+
+  function drawNet(bulge){
+    ctx.clearRect(0,0,W,H);
+
+    // Net line style
+    ctx.strokeStyle = 'rgba(210,230,255,0.75)';
+    ctx.lineWidth   = 1.2;
+
+    // Draw vertical lines
+    for(let c=0; c<cols; c++){
+      ctx.beginPath();
+      for(let r=0; r<rows; r++){
+        // Grid point
+        const gx = c * cw;
+        const gy = r * ch;
+        // Distance from impact centre
+        const dx = gx - cx;
+        const dy = gy - cy;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        // Radial displacement: points inside bulge radius get pushed outward
+        let push = 0;
+        if(dist < bulge && dist > 0){
+          // Smooth falloff — peak at centre, 0 at edge
+          const t = 1 - (dist/bulge);
+          push = t * t * bulge * 0.42;
+        }
+        const nx = gx + (dist>0?(dx/dist)*push:0);
+        const ny = gy + (dist>0?(dy/dist)*push:0);
+        if(r===0) ctx.moveTo(nx,ny); else ctx.lineTo(nx,ny);
+      }
+      ctx.stroke();
+    }
+
+    // Draw horizontal lines
+    for(let r=0; r<rows; r++){
+      ctx.beginPath();
+      for(let c=0; c<cols; c++){
+        const gx = c * cw;
+        const gy = r * ch;
+        const dx = gx - cx;
+        const dy = gy - cy;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        let push = 0;
+        if(dist < bulge && dist > 0){
+          const t = 1 - (dist/bulge);
+          push = t * t * bulge * 0.42;
+        }
+        const nx = gx + (dist>0?(dx/dist)*push:0);
+        const ny = gy + (dist>0?(dy/dist)*push:0);
+        if(c===0) ctx.moveTo(nx,ny); else ctx.lineTo(nx,ny);
+      }
+      ctx.stroke();
+    }
+  }
+
+  let lastT = performance.now();
+
+  function frame(now){
+    const dt = Math.min((now - lastT)/1000, 0.05);  // seconds, capped
+    lastT = now;
+
+    if(phase === 'expand'){
+      bulgeR += velocity * dt;
+      velocity = Math.max(velocity - 420*dt, 0);
+      if(bulgeR >= maxR * 0.85 || velocity <= 0){
+        phase = 'spring';
+        velocity = -65;   // spring back
+      }
+    } else if(phase === 'spring'){
+      bulgeR += velocity * dt;
+      velocity += 90 * dt;  // spring constant pulls back
+      if(bulgeR <= maxR * 0.6){
+        phase = 'settle';
+        velocity = 20;
+      }
+    } else if(phase === 'settle'){
+      bulgeR += velocity * dt;
+      velocity -= 55 * dt;
+      if(velocity <= 0){ phase = 'hold'; settled = now; }
+    } else if(phase === 'hold'){
+      // Hold the settled bulge briefly
+      if(now - settled > 400) phase = 'retreat';
+    } else if(phase === 'retreat'){
+      bulgeR -= 60 * dt;
+      if(bulgeR <= 0){ bulgeR=0; drawNet(0); return; }
+    }
+
+    drawNet(bulgeR);
+    netAnimId = requestAnimationFrame(frame);
+  }
+
+  // Draw resting net immediately
+  drawNet(0);
+  netAnimId = requestAnimationFrame(frame);
+}
+
+// ═══════════════════════════════
+// NOTIFICATIONS
+// ═══════════════════════════════
+function showNotif(msg){
+  const ring=document.getElementById('notif-ring');
+  const n=document.createElement('div');
+  n.className='notif'; n.textContent=msg;
+  ring.appendChild(n);
+  setTimeout(()=>n.remove(),3200);
+}
+
+// ═══════════════════════════════
+// JSONBIN
+// ═══════════════════════════════
+const JSONBIN_BIN_ID='69cd85b536566621a86e78cf';
+const JSONBIN_API_KEY='$2a$10$8x0f4NuJJ6q9PYANsb5FYeC4w280SlER99FvU7olrMZKtx2peHxVy';
+
+function endGame(){
+  clearInterval(timerInterval); gameRunning=false;
+  document.getElementById('end-name').textContent=`${player.firstName} ${player.lastName} — #${player.squad} — ${player.team}`;
+  document.getElementById('end-score').textContent=score.toLocaleString();
+  const sb=document.getElementById('submit-btn');
+  if(sb){sb.textContent='🏆 SAVE TO LEADERBOARD';sb.disabled=false;sb.style.background='';sb.style.color='';}
+  document.getElementById('end-screen').style.display='flex';
+}
+
+async function submitScore(){
+  const btn=document.getElementById('submit-btn');
+  if(btn){btn.textContent='⏳ Saving...';btn.disabled=true;}
+  function fetchT(url,opts,ms=8000){
+    const ctrl=new AbortController();
+    const t=setTimeout(()=>ctrl.abort(),ms);
+    return fetch(url,{...opts,signal:ctrl.signal}).finally(()=>clearTimeout(t));
+  }
+  const entry={firstName:player.firstName,lastName:player.lastName,squad:player.squad,team:player.team,score,level:LEVELS[currentLevel].num,date:Date.now()};
+  try{
+    const gr=await fetchT(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest?t=${Date.now()}`,{headers:{'X-Master-Key':JSONBIN_API_KEY,'Cache-Control':'no-cache'}});
+    if(!gr.ok)throw new Error(`Read ${gr.status}`);
+    const gd=await gr.json();
+    const cur=Array.isArray(gd.record?.scores)?gd.record.scores:[];
+    cur.push(entry);
+    const pr=await fetchT(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_API_KEY},body:JSON.stringify({scores:cur})});
+    if(!pr.ok)throw new Error(`Write ${pr.status}`);
+    if(btn){btn.textContent='✅ Saved!';btn.style.background='#4caf50';btn.style.color='white';btn.disabled=true;}
+    showNotif('🏆 Score saved!');
+  }catch(e){
+    const m=e.name==='AbortError'?'⏱️ Timed out':'❌ Save failed — try again';
+    if(btn){btn.textContent=m;btn.disabled=false;btn.style.background='';btn.style.color='';}
+  }
+}
+
+function resetGame(){
+  document.getElementById('end-screen').style.display='none';
+  document.getElementById('level-fail-screen').style.display='none';
+  beginLevel(0);
+}
+</script>
+</body>
+</html>
