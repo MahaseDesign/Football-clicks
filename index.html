@@ -462,97 +462,71 @@ let gameRunning=false, questionCount=0;
 let currentLevel=0, timerSecsLeft=180, timerInterval=null;
 
 // ═══════════════════════════════
-// "GOAAAL" VOICE — Web Audio
+// GOAL FANFARE — Web Audio
 // ═══════════════════════════════
 function playCrowdCheer(){
   try{
     const ctx = new(window.AudioContext||window.webkitAudioContext)();
-    const now = ctx.currentTime;
+
+    // Classic football fanfare: da-da-da-DAAA da-da-da-DAAA
+    // Notes: C4=262 E4=330 G4=392 C5=523 A4=440
+    const BPM = 220;
+    const B = 60/BPM;  // one beat in seconds
+    // [frequency, startBeat, durationBeats]
+    const notes = [
+      // First phrase — rising fanfare
+      [330, 0.0,  0.5],
+      [392, 0.5,  0.5],
+      [523, 1.0,  1.0],
+      [440, 2.0,  0.5],
+      [392, 2.5,  0.5],
+      [523, 3.0,  1.5],
+      // Second phrase — answer
+      [392, 4.8,  0.5],
+      [440, 5.3,  0.5],
+      [523, 5.8,  0.5],
+      [587, 6.3,  0.5],
+      [659, 6.8,  1.8],
+    ];
 
     const master = ctx.createGain();
-    master.gain.setValueAtTime(0, now);
-    master.gain.linearRampToValueAtTime(0.7, now+0.1);
-    master.gain.setValueAtTime(0.7, now+1.6);
-    master.gain.linearRampToValueAtTime(0, now+2.6);
+    master.gain.setValueAtTime(0.0, ctx.currentTime);
+    master.gain.linearRampToValueAtTime(0.55, ctx.currentTime+0.02);
     master.connect(ctx.destination);
 
-    // Build a voice from sine harmonics (much less buzzy than sawtooth)
-    // Deep male voice ~100Hz fundamental
-    const fundamentals = [98, 102, 105, 99, 101, 107];
+    notes.forEach(([freq, startB, durB])=>{
+      const t0 = ctx.currentTime + startB * B;
+      const t1 = t0 + durB * B;
 
-    fundamentals.forEach((f0, vi) => {
-      const voiceOut = ctx.createGain();
-      voiceOut.gain.setValueAtTime(0, now);
-      voiceOut.gain.linearRampToValueAtTime(0.14, now + 0.08 + vi*0.02);
-      voiceOut.gain.setValueAtTime(0.14, now+1.7);
-      voiceOut.gain.linearRampToValueAtTime(0, now+2.7);
-      voiceOut.connect(master);
+      // Main tone — triangle wave (warm, not buzzy)
+      const osc = ctx.createOscillator();
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      const og = ctx.createGain();
+      og.gain.setValueAtTime(0, t0);
+      og.gain.linearRampToValueAtTime(0.6, t0+0.01);
+      og.gain.setValueAtTime(0.6, t1-0.04);
+      og.gain.linearRampToValueAtTime(0, t1);
+      osc.connect(og); og.connect(master);
+      osc.start(t0); osc.stop(t1+0.05);
 
-      // Add harmonics 1–6 with falling amplitude (voice-like spectrum)
-      // Harmonic amplitudes: 1=1.0, 2=0.5, 3=0.25, 4=0.12, 5=0.08, 6=0.05
-      const harmAmps = [1.0, 0.5, 0.25, 0.12, 0.08, 0.05];
-      harmAmps.forEach((amp, hi) => {
-        const osc = ctx.createOscillator();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(f0 * (hi+1), now);
-        // Gentle pitch rise — "GOA" lift
-        osc.frequency.linearRampToValueAtTime(f0*(hi+1)*1.04, now+0.3);
-        osc.frequency.linearRampToValueAtTime(f0*(hi+1)*1.06, now+0.9);
-        osc.frequency.linearRampToValueAtTime(f0*(hi+1)*1.04, now+2.2);
-
-        const hg = ctx.createGain();
-        hg.gain.value = amp * 0.12;
-        osc.connect(hg);
-        hg.connect(voiceOut);
-        osc.start(now + vi*0.02);
-        osc.stop(now + 2.9);
-      });
-
-      // Formant filters to shape vowel "OHH" → "AAH"
-      // Without these it sounds like a tone; with them it sounds like a voice
-      const f1 = ctx.createBiquadFilter();
-      f1.type = 'peaking'; f1.Q.value = 3;
-      f1.gain.value = 14;
-      f1.frequency.setValueAtTime(520, now);
-      f1.frequency.linearRampToValueAtTime(780, now+0.4);  // OH→AH
-      f1.frequency.linearRampToValueAtTime(720, now+2.0);
-
-      const f2 = ctx.createBiquadFilter();
-      f2.type = 'peaking'; f2.Q.value = 4;
-      f2.gain.value = 10;
-      f2.frequency.setValueAtTime(820, now);
-      f2.frequency.linearRampToValueAtTime(1200, now+0.4);
-      f2.frequency.linearRampToValueAtTime(1100, now+2.0);
-
-      // Low-pass to remove any remaining harshness above 3kHz
-      const lp = ctx.createBiquadFilter();
-      lp.type = 'lowpass';
-      lp.frequency.value = 3000;
-      lp.Q.value = 0.5;
-
-      voiceOut.connect(f1);
-      f1.connect(f2);
-      f2.connect(lp);
-      lp.connect(master);
-      // Disconnect direct path — route through filters instead
-      voiceOut.disconnect(master);
+      // Octave below — adds depth
+      const osc2 = ctx.createOscillator();
+      osc2.type = 'sine';
+      osc2.frequency.value = freq / 2;
+      const og2 = ctx.createGain();
+      og2.gain.setValueAtTime(0, t0);
+      og2.gain.linearRampToValueAtTime(0.25, t0+0.01);
+      og2.gain.setValueAtTime(0.25, t1-0.04);
+      og2.gain.linearRampToValueAtTime(0, t1);
+      osc2.connect(og2); og2.connect(master);
+      osc2.start(t0); osc2.stop(t1+0.05);
     });
 
-    // Very soft breath/air underneath — barely audible, just adds humanness
-    const breathLen = ctx.sampleRate * 2.5;
-    const bBuf = ctx.createBuffer(1, breathLen, ctx.sampleRate);
-    const bd = bBuf.getChannelData(0);
-    for(let i=0;i<breathLen;i++) bd[i]=(Math.random()*2-1);
-    const bSrc = ctx.createBufferSource();
-    bSrc.buffer = bBuf;
-    const bHp = ctx.createBiquadFilter(); bHp.type='highpass'; bHp.frequency.value=800;
-    const bLp = ctx.createBiquadFilter(); bLp.type='lowpass';  bLp.frequency.value=2400;
-    const bGain = ctx.createGain();
-    bGain.gain.setValueAtTime(0, now);
-    bGain.gain.linearRampToValueAtTime(0.018, now+0.15);
-    bGain.gain.linearRampToValueAtTime(0, now+2.5);
-    bSrc.connect(bHp); bHp.connect(bLp); bLp.connect(bGain); bGain.connect(master);
-    bSrc.start(now); bSrc.stop(now+2.6);
+    // Fade out master at end
+    const totalBeats = 8.6;
+    master.gain.setValueAtTime(0.55, ctx.currentTime + totalBeats*B - 0.3);
+    master.gain.linearRampToValueAtTime(0, ctx.currentTime + totalBeats*B + 0.1);
 
   }catch(e){}
 }
