@@ -57,9 +57,16 @@ body{font-family:'Nunito',sans-serif;background:var(--navy);min-height:100vh;ove
 /* LEVEL + TIMER BAR */
 .level-bar{position:relative;z-index:10;width:100%;display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.35);padding:6px 14px;flex-wrap:wrap;}
 .level-badge{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;padding:3px 11px;border-radius:20px;white-space:nowrap;}
-.level-1-badge{background:rgba(76,175,80,0.22);color:#4caf50;border:1.5px solid rgba(76,175,80,0.4);}
-.level-2-badge{background:rgba(245,197,24,0.18);color:var(--gold);border:1.5px solid rgba(245,197,24,0.4);}
-.level-3-badge{background:rgba(229,57,53,0.18);color:#ff6b6b;border:1.5px solid rgba(229,57,53,0.4);}
+.lv1 {background:rgba(76,175,80,0.22); color:#4caf50; border:1.5px solid rgba(76,175,80,0.5);}
+.lv2 {background:rgba(139,195,74,0.22);color:#8bc34a; border:1.5px solid rgba(139,195,74,0.5);}
+.lv3 {background:rgba(33,150,243,0.22);color:#64b5f6; border:1.5px solid rgba(33,150,243,0.5);}
+.lv4 {background:rgba(255,152,0,0.22); color:#ffa726; border:1.5px solid rgba(255,152,0,0.5);}
+.lv5 {background:rgba(244,67,54,0.22); color:#ef5350; border:1.5px solid rgba(244,67,54,0.5);}
+.lv6 {background:rgba(156,39,176,0.22);color:#ce93d8; border:1.5px solid rgba(156,39,176,0.5);}
+.lv7 {background:rgba(121,85,72,0.22); color:#bcaaa4; border:1.5px solid rgba(121,85,72,0.5);}
+.lv8 {background:rgba(224,224,224,0.15);color:#e0e0e0;border:1.5px solid rgba(224,224,224,0.4);}
+.lv9 {background:rgba(233,30,99,0.22); color:#f48fb1; border:1.5px solid rgba(233,30,99,0.5);}
+.lv10{background:rgba(156,39,176,0.30);color:#ce93d8; border:2px solid rgba(156,39,176,0.8);box-shadow:0 0 10px rgba(156,39,176,0.4);}
 .timer-wrap{flex:1;display:flex;align-items:center;gap:7px;}
 .timer-num{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--white);min-width:42px;}
 .timer-num.warning{color:#ff9800;animation:timerPulse 0.5s ease infinite;}
@@ -75,10 +82,10 @@ body{font-family:'Nunito',sans-serif;background:var(--navy);min-height:100vh;ove
 
 /* BALL */
 .game-field{position:relative;z-index:5;width:100%;flex:1;display:flex;align-items:center;justify-content:center;}
-#football{font-size:clamp(80px,14vw,116px);cursor:pointer;user-select:none;z-index:10;position:relative;transition:filter 0.07s;filter:drop-shadow(0 8px 18px rgba(0,0,0,0.4));}
+#football{font-size:clamp(80px,14vw,116px);cursor:pointer;user-select:none;z-index:10;position:relative;transition:filter 0.07s;}
 #football:active{transform:scale(0.87);}
 #football.kick{animation:kickAnim 0.22s ease-out;}
-#football.glow{filter:drop-shadow(0 0 22px rgba(245,197,24,1)) drop-shadow(0 0 44px rgba(245,197,24,0.55)) drop-shadow(0 8px 18px rgba(0,0,0,0.4));}
+#football.glow{filter:hue-rotate(var(--ball-hue,0deg)) drop-shadow(0 0 22px var(--ball-glow,rgba(245,197,24,1))) drop-shadow(0 0 44px var(--ball-glow,rgba(245,197,24,0.55))) drop-shadow(0 8px 18px rgba(0,0,0,0.4)) !important;}
 @keyframes kickAnim{0%{transform:scale(1);}40%{transform:scale(0.83) rotate(-12deg);}100%{transform:scale(1) rotate(0);}}
 
 /* FLOAT +1 */
@@ -94,27 +101,31 @@ body{font-family:'Nunito',sans-serif;background:var(--navy);min-height:100vh;ove
 .question-header h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(20px,4.5vw,40px);color:var(--navy);letter-spacing:2px;text-shadow:0 2px 0 rgba(255,255,255,0.5);}
 .question-header p{font-size:clamp(11px,2vw,15px);color:var(--navy);font-weight:700;margin-top:5px;}
 .double-badge{display:inline-block;background:var(--gold);color:var(--navy);font-family:'Bebas Neue',sans-serif;font-size:17px;padding:3px 14px;border-radius:20px;letter-spacing:1px;margin-bottom:5px;box-shadow:0 4px 12px rgba(245,197,24,0.4);}
-.cloud-container{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:26px 20px;padding:200px 20px 90px;align-content:center;}
-.cloud-answer{position:relative;cursor:pointer;width:min(245px,40vw);min-width:136px;text-align:center;animation:cloudFloat 3s ease-in-out infinite;filter:drop-shadow(0 5px 13px rgba(0,0,0,0.15));transition:filter 0.18s;}
-.cloud-answer:nth-child(2){animation-delay:-1s;}
-.cloud-answer:nth-child(3){animation-delay:-2s;}
-.cloud-answer:nth-child(4){animation-delay:-0.5s;}
-@keyframes cloudFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
-.cloud-answer:hover{filter:drop-shadow(0 10px 22px rgba(0,0,0,0.26));transform:scale(1.05);}
-.cloud-wrap{position:relative;width:100%;}
-.cloud-bumps{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-around;padding:0 15px;transform:translateY(-55%);pointer-events:none;}
-.cloud-bump{background:#fff;border-radius:50%;}
-.cloud-bump-1{width:48px;height:48px;}
-.cloud-bump-2{width:36px;height:36px;margin-top:8px;}
-.cloud-bump-3{width:30px;height:30px;margin-top:14px;}
-.cloud-body{background:#fff;border-radius:36px;padding:15px 16px 13px;font-family:'Nunito',sans-serif;font-weight:900;font-size:clamp(12px,2.3vw,15px);color:var(--navy);line-height:1.3;position:relative;z-index:2;word-break:break-word;}
-.cloud-answer.correct .cloud-body,.cloud-answer.correct .cloud-bump{background:#4caf50;color:#fff;}
+.cloud-container{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:32px 24px;padding:195px 20px 90px;align-content:center;}
+.cloud-answer{position:relative;cursor:pointer;width:min(240px,42vw);min-width:140px;text-align:center;animation:cloudFloat 3.2s ease-in-out infinite;transition:transform 0.18s, filter 0.18s;filter:drop-shadow(0 8px 18px rgba(80,120,180,0.22));}
+.cloud-answer:nth-child(2){animation-delay:-1.1s;}
+.cloud-answer:nth-child(3){animation-delay:-2.0s;}
+.cloud-answer:nth-child(4){animation-delay:-0.6s;}
+@keyframes cloudFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-11px);}}
+.cloud-answer:hover{transform:scale(1.07) translateY(-6px);filter:drop-shadow(0 12px 24px rgba(80,120,180,0.35));}
+.cloud-answer:active{transform:scale(0.96);}
+
+/* The SVG cloud sits behind the text; text sits in .cloud-text */
+.cloud-svg-wrap{position:relative;display:flex;align-items:center;justify-content:center;}
+.cloud-svg-wrap svg{display:block;width:100%;height:auto;}
+.cloud-text{position:absolute;left:8%;right:8%;top:52%;transform:translateY(-50%);font-family:'Nunito',sans-serif;font-weight:900;font-size:clamp(12px,2.4vw,15px);color:var(--navy);line-height:1.3;word-break:break-word;text-align:center;pointer-events:none;padding:0 4px;}
+
+/* Colour states */
+.cloud-answer.correct .cloud-svg-wrap svg path{fill:#4caf50;}
+.cloud-answer.correct .cloud-text{color:#fff;}
 .cloud-answer.correct{animation:correctPop 0.5s ease forwards;}
-.cloud-answer.wrong .cloud-body,.cloud-answer.wrong .cloud-bump{background:var(--red);color:#fff;}
+.cloud-answer.wrong .cloud-svg-wrap svg path{fill:#e53935;}
+.cloud-answer.wrong .cloud-text{color:#fff;}
 .cloud-answer.wrong{animation:wrongShake 0.4s ease forwards;}
-.cloud-answer.show-correct .cloud-body,.cloud-answer.show-correct .cloud-bump{background:#4caf50;color:#fff;}
-@keyframes correctPop{0%{transform:scale(1);}50%{transform:scale(1.15);}100%{transform:scale(1);}}
-@keyframes wrongShake{0%,100%{transform:translateX(0);}25%{transform:translateX(-8px);}75%{transform:translateX(8px);}}
+.cloud-answer.show-correct .cloud-svg-wrap svg path{fill:#4caf50;}
+.cloud-answer.show-correct .cloud-text{color:#fff;}
+@keyframes correctPop{0%{transform:scale(1);}50%{transform:scale(1.14);}100%{transform:scale(1);}}
+@keyframes wrongShake{0%,100%{transform:translateX(0);}25%{transform:translateX(-9px);}75%{transform:translateX(9px);}}
 .skip-btn{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);padding:10px 26px;background:rgba(10,22,40,0.7);border:2px solid rgba(255,255,255,0.3);border-radius:30px;color:rgba(255,255,255,0.7);font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:1px;transition:all 0.2s;z-index:20;}
 .skip-btn:hover{background:rgba(10,22,40,0.9);color:#fff;}
 
@@ -154,6 +165,15 @@ body{font-family:'Nunito',sans-serif;background:var(--navy);min-height:100vh;ove
 .notif{background:rgba(10,22,40,0.92);border:1.5px solid var(--gold);border-radius:12px;padding:8px 15px;color:var(--white);font-size:12px;font-weight:700;animation:notifSlide 0.3s ease,notifFade 0.4s 2.6s ease forwards;max-width:220px;text-align:right;}
 @keyframes notifSlide{from{transform:translateX(55px);opacity:0;}to{transform:translateX(0);opacity:1;}}
 @keyframes notifFade{to{opacity:0;transform:translateX(18px);}}
+
+/* LEVEL UP FLASH */
+#levelup-screen{display:none;position:fixed;inset:0;z-index:460;background:rgba(4,12,26,0.92);align-items:center;justify-content:center;flex-direction:column;text-align:center;pointer-events:none;}
+#levelup-screen.show{display:flex;animation:levelUpFade 1.8s ease forwards;}
+@keyframes levelUpFade{0%{opacity:0;}15%{opacity:1;}75%{opacity:1;}100%{opacity:0;}}
+.levelup-ball{font-size:clamp(80px,18vw,120px);animation:levelUpBounce 0.35s ease infinite alternate;}
+@keyframes levelUpBounce{from{transform:scale(0.88);}to{transform:scale(1.12);}}
+.levelup-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(52px,14vw,110px);color:var(--gold);letter-spacing:4px;text-shadow:0 0 40px rgba(245,197,24,0.8);margin-top:8px;}
+.levelup-sub{font-family:'Bebas Neue',sans-serif;font-size:clamp(22px,5vw,40px);color:rgba(255,255,255,0.7);letter-spacing:2px;margin-top:6px;}
 
 /* LEVEL FAIL */
 #level-fail-screen{display:none;position:fixed;inset:0;z-index:450;background:linear-gradient(160deg,#1a0505,#3a0a0a);align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:24px;}
@@ -261,6 +281,13 @@ body{font-family:'Nunito',sans-serif;background:var(--navy);min-height:100vh;ove
 </div>
 
 <div class="notification-ring" id="notif-ring"></div>
+
+<!-- LEVEL UP FLASH -->
+<div id="levelup-screen">
+  <div class="levelup-ball" id="levelup-ball">⚽</div>
+  <div class="levelup-title">LEVEL UP!</div>
+  <div class="levelup-sub" id="levelup-sub">LEVEL 2 BEGINS</div>
+</div>
 
 <!-- LEVEL FAIL -->
 <div id="level-fail-screen">
@@ -444,12 +471,23 @@ const QUESTIONS = [
 ];
 
 // ═══════════════════════════════
-// LEVEL CONFIG
+// LEVEL CONFIG  — 10 levels
+// target = score needed to pass
+// secs   = timer (gets shorter)
+// tMin/tMax = question tier range
+// hue    = CSS hue-rotate degrees to tint the ⚽
 // ═══════════════════════════════
 const LEVELS = [
-  {num:1, target:1000,  secs:180, tMin:1, tMax:2, label:'LEVEL 1', cls:'level-1-badge', barCol:'#4caf50'},
-  {num:2, target:5000,  secs:180, tMin:2, tMax:3, label:'LEVEL 2', cls:'level-2-badge', barCol:'var(--gold)'},
-  {num:3, target:15000, secs:180, tMin:3, tMax:5, label:'LEVEL 3', cls:'level-3-badge', barCol:'var(--red)'},
+  {num:1,  target:500,   secs:180, tMin:1, tMax:1, label:'LEVEL 1',  cls:'lv1',  barCol:'#4caf50', hue:0,   glowCol:'rgba(255,255,255,0.9)'},
+  {num:2,  target:1000,  secs:180, tMin:1, tMax:2, label:'LEVEL 2',  cls:'lv2',  barCol:'#8bc34a', hue:90,  glowCol:'rgba(139,195,74,1)'},
+  {num:3,  target:2000,  secs:170, tMin:1, tMax:2, label:'LEVEL 3',  cls:'lv3',  barCol:'#cddc39', hue:200, glowCol:'rgba(33,150,243,1)'},
+  {num:4,  target:3500,  secs:160, tMin:2, tMax:3, label:'LEVEL 4',  cls:'lv4',  barCol:'#ffeb3b', hue:30,  glowCol:'rgba(255,152,0,1)'},
+  {num:5,  target:5000,  secs:150, tMin:2, tMax:3, label:'LEVEL 5',  cls:'lv5',  barCol:'#ffc107', hue:0,   glowCol:'rgba(244,67,54,1)'},
+  {num:6,  target:7500,  secs:140, tMin:2, tMax:4, label:'LEVEL 6',  cls:'lv6',  barCol:'#ff9800', hue:270, glowCol:'rgba(156,39,176,1)'},
+  {num:7,  target:10000, secs:130, tMin:3, tMax:4, label:'LEVEL 7',  cls:'lv7',  barCol:'#ff5722', hue:320, glowCol:'rgba(233,30,99,1)'},
+  {num:8,  target:13000, secs:120, tMin:3, tMax:5, label:'LEVEL 8',  cls:'lv8',  barCol:'#f44336', hue:160, glowCol:'rgba(0,188,212,1)'},
+  {num:9,  target:17000, secs:110, tMin:4, tMax:5, label:'LEVEL 9',  cls:'lv9',  barCol:'#e91e63', hue:45,  glowCol:'rgba(255,235,59,1)'},
+  {num:10, target:22000, secs:100, tMin:4, tMax:5, label:'LEVEL 10', cls:'lv10', barCol:'#9c27b0', hue:290, glowCol:'rgba(156,39,176,1)'},
 ];
 
 // ═══════════════════════════════
@@ -566,6 +604,13 @@ function beginLevel(idx){
   document.getElementById('hud-squad').textContent=`#${player.squad}`;
   document.getElementById('hud-team').textContent=player.team.toUpperCase();
 
+  // Tint the ⚽ ball with hue-rotate — keeps the pattern, changes colour
+  const ballEl=document.getElementById('football');
+  ballEl.textContent='⚽';
+  ballEl.style.filter=`hue-rotate(${lv.hue}deg) drop-shadow(0 8px 18px rgba(0,0,0,0.4))`;
+  document.documentElement.style.setProperty('--ball-glow', lv.glowCol);
+  document.documentElement.style.setProperty('--ball-hue', lv.hue+'deg');
+
   const badge=document.getElementById('level-badge');
   badge.textContent=lv.label;
   badge.className=`level-badge ${lv.cls}`;
@@ -581,7 +626,7 @@ function beginLevel(idx){
   clearInterval(timerInterval);
   timerInterval=setInterval(tickTimer,1000);
 
-  showNotif(`⚽ ${lv.label} — reach ${lv.target.toLocaleString()} pts in 3 mins!`);
+  showNotif(`${lv.ball} ${lv.label} — reach ${lv.target.toLocaleString()} pts in ${Math.floor(lv.secs/60)}:${String(lv.secs%60).padStart(2,'0')}!`);
 }
 
 function tickTimer(){
@@ -609,8 +654,15 @@ function checkLevelEnd(timedOut){
     clearInterval(timerInterval);
     gameRunning=false;
     if(currentLevel<LEVELS.length-1){
-      showNotif(`🎉 ${lv.label} passed! Score: ${score.toLocaleString()}`);
-      setTimeout(()=>beginLevel(currentLevel+1),1800);
+      const nextLv=LEVELS[currentLevel+1];
+      // Show level-up flash with next level's tinted ball
+      const lu=document.getElementById('levelup-screen');
+      const lub=document.getElementById('levelup-ball');
+      lub.textContent='⚽';
+      lub.style.filter=`hue-rotate(${nextLv.hue}deg)`;
+      document.getElementById('levelup-sub').textContent=`${nextLv.label} BEGINS`;
+      lu.classList.add('show');
+      setTimeout(()=>{ lu.classList.remove('show'); beginLevel(currentLevel+1); },1900);
     } else {
       endGame();
     }
@@ -715,7 +767,29 @@ function openQuestion(){
   shuffled.forEach(ans=>{
     const div=document.createElement('div');
     div.className='cloud-answer';
-    div.innerHTML=`<div class="cloud-wrap"><div class="cloud-bumps"><div class="cloud-bump cloud-bump-1"></div><div class="cloud-bump cloud-bump-2"></div><div class="cloud-bump cloud-bump-3"></div></div><div class="cloud-body">${ans.text}</div></div>`;
+    // Fluffy cloud SVG — smooth organic bumps path
+    div.innerHTML=`
+      <div class="cloud-svg-wrap">
+        <svg viewBox="0 0 220 100" xmlns="http://www.w3.org/2000/svg">
+          <path d="M 30 80
+            Q 10 80 10 62
+            Q 10 46 26 44
+            Q 24 30 38 26
+            Q 50 14 68 22
+            Q 76 10 92 12
+            Q 110 10 118 24
+            Q 132 14 148 22
+            Q 166 18 172 34
+            Q 186 34 192 46
+            Q 202 54 196 66
+            Q 192 80 174 80
+            Z"
+            fill="white"
+            stroke="rgba(200,218,255,0.6)"
+            stroke-width="1.5"/>
+        </svg>
+        <div class="cloud-text">${ans.text}</div>
+      </div>`;
     div.onclick=()=>answerQuestion(ans.idx===currentQuestion.c,div,container);
     container.appendChild(div);
   });
@@ -743,7 +817,7 @@ function answerQuestion(isCorrect,clickedEl,container){
   } else {
     clickedEl.classList.add('wrong');
     container.querySelectorAll('.cloud-answer').forEach(c=>{
-      if(c.querySelector('.cloud-body').textContent.trim()===currentQuestion.a[currentQuestion.c])
+      if(c.querySelector('.cloud-text').textContent.trim()===currentQuestion.a[currentQuestion.c])
         c.classList.add('show-correct');
     });
     showFlash('wrong');
